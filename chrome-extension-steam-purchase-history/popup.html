@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 400px;
+      padding: 10px;
+      font-family: Arial, sans-serif;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      background-color: #f0f8ff;
+      border: 1px solid #4a90e2;
+      text-align: center;
+    }
+
+    .data-item {
+      padding: 8px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 3px;
+      background-color: #f9f9f9;
+      font-size: 12px;
+    }
+
+    .game-item {
+      padding: 6px;
+      margin: 3px 0;
+      border: 1px solid #ccc;
+      border-radius: 2px;
+      background-color: #fff;
+      font-size: 11px;
+    }
+
+    .timestamp {
+      color: #666;
+      font-size: 11px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 3px;
+      background-color: #4a90e2;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #357abd;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    .clear-btn {
+      background-color: #e74c3c;
+    }
+
+    .clear-btn:hover {
+      background-color: #c0392b;
+    }
+
+    .data-container {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .no-data {
+      text-align: center;
+      color: #666;
+      font-style: italic;
+      padding: 20px;
+    }
+
+    .loading {
+      text-align: center;
+      color: #4a90e2;
+      font-style: italic;
+    }
+
+    .error {
+      text-align: center;
+      color: #e74c3c;
+      font-style: italic;
+      padding: 10px;
+    }
+
+    .summary {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 5px;
+      background-color: #f5f5f5;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    .tab-container {
+      display: flex;
+      margin: 10px 0;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 8px;
+      text-align: center;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .tab:first-child {
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+    }
+
+    .tab:last-child {
+      border-top-right-radius: 3px;
+      border-bottom-right-radius: 3px;
+      border-left: none;
+    }
+
+    .tab.active {
+      background-color: #4a90e2;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h3>Steam User Data Viewer</h3>
+  </div>
+
+  <div class="status" id="status">
+    Ready to fetch Steam data
+  </div>
+
+  <button id="fetchBtn">Fetch Steam User Data</button>
+
+  <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 3px; background-color: #f9f9f9;">
+    <div style="font-size: 12px; margin-bottom: 5px;">Manual Steam ID (if auto-detection fails):</div>
+    <input type="text" id="manualSteamId" placeholder="Enter your Steam ID (17 digits)" style="width: 70%; padding: 5px; margin-right: 5px; border: 1px solid #ccc; border-radius: 2px;">
+    <button id="fetchManualBtn" style="width: 25%; padding: 5px; font-size: 11px; margin: 0;">Fetch</button>
+  </div>
+
+  <button id="clearBtn" class="clear-btn">Clear Data</button>
+
+  <div class="tab-container">
+    <div class="tab active" data-tab="overview">Overview</div>
+    <div class="tab" data-tab="games">Games</div>
+    <div class="tab" data-tab="wishlist">Wishlist</div>
+    <div class="tab" data-tab="tags">Tags</div>
+  </div>
+
+  <div class="data-container" id="dataContainer">
+    <div class="no-data">Click "Fetch Steam User Data" to get started</div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
