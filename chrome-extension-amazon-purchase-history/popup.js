@@ -24,16 +24,39 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 統計情報を更新
     function updateStats() {
-        chrome.storage.local.get(['amazonOrders', 'lastExtracted'], function(result) {
+        chrome.storage.local.get(['amazonOrders', 'lastExtracted', 'lastNetworkExtraction', 'networkResponses'], function(result) {
             const orders = result.amazonOrders || [];
+            const networkResponses = result.networkResponses || [];
             const lastExtracted = result.lastExtracted;
+            const lastNetworkExtraction = result.lastNetworkExtraction;
 
             document.getElementById('orders-count').textContent = orders.length;
 
-            if (lastExtracted) {
+            // ネットワークレスポンス数も表示
+            const statsSection = document.querySelector('.stats-section');
+            let networkCountElement = document.getElementById('network-count');
+            if (!networkCountElement) {
+                const networkCountP = document.createElement('p');
+                networkCountP.innerHTML = '<strong>ネットワークレスポンス数:</strong> <span id="network-count">0</span>';
+                statsSection.appendChild(networkCountP);
+                networkCountElement = document.getElementById('network-count');
+            }
+            networkCountElement.textContent = networkResponses.length;
+
+            if (lastNetworkExtraction) {
+                const date = new Date(lastNetworkExtraction);
+                document.getElementById('last-extracted').textContent =
+                    date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP') + ' (ネットワーク)';
+            } else if (lastExtracted) {
                 const date = new Date(lastExtracted);
                 document.getElementById('last-extracted').textContent =
-                    date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP');
+                    date.toLocaleDateString('ja-JP') + ' ' + date.toLocaleTimeString('ja-JP') + ' (DOM)';
+            }
+
+            // ネットワーク監視がアクティブかチェック
+            if (lastNetworkExtraction) {
+                document.getElementById('extraction-status').textContent += ' - ネットワーク監視アクティブ';
+                document.getElementById('extraction-status').className = 'success';
             }
         });
     }
@@ -75,7 +98,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // データ表示ボタン
     document.getElementById('view-data-btn').addEventListener('click', function() {
         const dataSection = document.getElementById('data-section');
+        const networkSection = document.getElementById('network-section');
         const ordersList = document.getElementById('orders-list');
+
+        // ネットワークセクションを閉じる
+        networkSection.style.display = 'none';
+        document.getElementById('view-network-btn').textContent = 'ネットワークデータを表示';
 
         if (dataSection.style.display === 'none') {
             chrome.storage.local.get(['amazonOrders'], function(result) {
@@ -93,6 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <div>価格: ${order.price || 'N/A'}</div>
                             <div>状況: ${order.status || 'N/A'}</div>
                             <div>商品数: ${order.products.length}</div>
+                            <div>ソース: ${order.source || 'DOM'}</div>
                             ${order.products.map(product => `
                                 <div class="product-item">${product.name}</div>
                             `).join('')}
@@ -106,6 +135,109 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             dataSection.style.display = 'none';
             this.textContent = '抽出データを表示';
+        }
+    });
+
+    // ネットワークデータ表示ボタン
+    document.getElementById('view-network-btn').addEventListener('click', function() {
+        const networkSection = document.getElementById('network-section');
+        const dataSection = document.getElementById('data-section');
+        const networkList = document.getElementById('network-list');
+
+        // データセクションを閉じる
+        dataSection.style.display = 'none';
+        document.getElementById('view-data-btn').textContent = '抽出データを表示';
+
+        if (networkSection.style.display === 'none') {
+            displayNetworkData();
+            networkSection.style.display = 'block';
+            this.textContent = 'ネットワークデータを隠す';
+        } else {
+            networkSection.style.display = 'none';
+            this.textContent = 'ネットワークデータを表示';
+        }
+    });
+
+    // ネットワークデータ表示関数
+    function displayNetworkData() {
+        chrome.storage.local.get(['networkResponses'], function(result) {
+            const networkResponses = result.networkResponses || [];
+            const networkList = document.getElementById('network-list');
+
+            if (networkResponses.length === 0) {
+                networkList.innerHTML = '<p>キャプチャされたネットワークデータがありません</p>';
+                return;
+            }
+
+            networkList.innerHTML = networkResponses.map((response, index) => {
+                const timestamp = new Date(response.timestamp).toLocaleString('ja-JP');
+                const url = response.url;
+                const shortUrl = url.length > 60 ? url.substring(0, 60) + '...' : url;
+
+                let jsonPreview = '';
+                let isJson = false;
+
+                try {
+                    const parsed = JSON.parse(response.responseText);
+                    isJson = true;
+                    jsonPreview = `<div class="json-preview"><strong>JSON:</strong> ${JSON.stringify(parsed, null, 2).substring(0, 200)}...</div>`;
+                } catch (e) {
+                    jsonPreview = '<div class="json-preview"><strong>形式:</strong> HTML/テキスト</div>';
+                }
+
+                return `
+                    <div class="network-item">
+                        <div class="network-header" onclick="toggleNetworkContent(${index})">
+                            <div class="network-url" title="${url}">${shortUrl}</div>
+                            <div class="network-timestamp">${timestamp}</div>
+                            <button class="expand-toggle" onclick="event.stopPropagation(); toggleNetworkContent(${index})">
+                                <span id="toggle-${index}">▼</span>
+                            </button>
+                        </div>
+                        <div class="network-content" id="content-${index}">
+                            <div class="network-info">
+                                <div><span>URL:</span> ${url}</div>
+                                <div><span>ステータス:</span> ${response.status || 'N/A'}</div>
+                                <div><span>タイムスタンプ:</span> ${timestamp}</div>
+                                <div><span>データサイズ:</span> ${response.responseText.length} 文字</div>
+                                <div><span>形式:</span> ${isJson ? 'JSON' : 'HTML/テキスト'}</div>
+                            </div>
+                            ${jsonPreview}
+                            <div><strong>生データ:</strong></div>
+                            <div class="network-raw-data">${response.responseText}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        });
+    }
+
+    // ネットワークコンテンツの展開/折りたたみ
+    window.toggleNetworkContent = function(index) {
+        const content = document.getElementById(`content-${index}`);
+        const toggle = document.getElementById(`toggle-${index}`);
+
+        if (content.classList.contains('expanded')) {
+            content.classList.remove('expanded');
+            toggle.textContent = '▼';
+        } else {
+            content.classList.add('expanded');
+            toggle.textContent = '▲';
+        }
+    };
+
+    // ネットワークデータ更新ボタン
+    document.getElementById('refresh-network-btn').addEventListener('click', function() {
+        displayNetworkData();
+    });
+
+    // ネットワークデータクリアボタン
+    document.getElementById('clear-network-btn').addEventListener('click', function() {
+        if (confirm('ネットワークデータをすべて削除しますか？')) {
+            chrome.storage.local.remove('networkResponses', function() {
+                displayNetworkData();
+                updateStats();
+            });
         }
     });
 

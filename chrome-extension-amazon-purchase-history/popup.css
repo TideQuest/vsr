@@ -147,3 +147,103 @@ button {
 .error {
   color: #d13212;
 }
+
+.network-controls {
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.network-item {
+  border: 1px solid #e0e0e0;
+  margin: 10px 0;
+  border-radius: 4px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.network-header {
+  background: #232f3e;
+  color: white;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.network-header:hover {
+  background: #37475a;
+}
+
+.network-url {
+  flex: 1;
+  margin-right: 10px;
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.network-timestamp {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.network-content {
+  display: none;
+  padding: 10px;
+  background: white;
+  border-top: 1px solid #e0e0e0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.network-content.expanded {
+  display: block;
+}
+
+.network-raw-data {
+  background: #f8f8f8;
+  padding: 8px;
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+}
+
+.network-info {
+  margin-bottom: 10px;
+  font-size: 12px;
+}
+
+.network-info span {
+  font-weight: bold;
+}
+
+.json-preview {
+  background: #f0f8ff;
+  padding: 8px;
+  border-radius: 3px;
+  margin: 5px 0;
+  border-left: 3px solid #0066c0;
+}
+
+.expand-toggle {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.expand-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
