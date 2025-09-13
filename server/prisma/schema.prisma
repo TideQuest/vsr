@@ -38,3 +38,36 @@ model Proof {
   createdAt  DateTime @default(now())
 }
 
+model Category {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  items     Item[]
+}
+
+model Item {
+  id                    Int              @id @default(autoincrement())
+  title                 String           @db.VarChar(255)
+  description           String?          @db.Text
+  categoryId            Int?
+  category              Category?        @relation(fields: [categoryId], references: [id])
+  createdAt             DateTime         @default(now())
+  recommendations       Recommendation[] @relation("ItemRecommendations")
+  recommendedByItems    Recommendation[] @relation("RecommendedItems")
+}
+
+model Recommendation {
+  id                  Int      @id @default(autoincrement())
+  itemId              Int
+  item                Item     @relation("ItemRecommendations", fields: [itemId], references: [id], onDelete: Cascade)
+  recommendedItemId   Int
+  recommendedItem     Item     @relation("RecommendedItems", fields: [recommendedItemId], references: [id], onDelete: Cascade)
+  score               Decimal? @db.Decimal(4, 3)
+  rank                Int      @default(0)
+  createdAt           DateTime @default(now())
+
+  @@unique([itemId, recommendedItemId])
+  @@index([itemId])
+  @@index([score(sort: Desc)])
+}
+
