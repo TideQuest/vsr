@@ -1,0 +1,22 @@
+{
+  "name": "ZK Steam Proto Dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "backend",
+  "workspaceFolder": "/usr/src/app",
+  "features": {},
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-azuretools.vscode-docker",
+        "Prisma.prisma"
+      ]
+    }
+  },
+  "postCreateCommand": "pnpm install && pnpm -C ../client install"
+}
+
