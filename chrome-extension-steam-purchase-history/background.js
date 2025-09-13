@@ -40,7 +40,9 @@ async function fetchSteamUserData() {
     }
 
     const responseText = await response.text();
-    const userData = parseSteamUserData(responseText);
+    let userData = parseSteamUserData(responseText);
+
+    userData = await enrichGameData(userData);
 
     steamUserData = {
       ...userData,
@@ -238,6 +240,7 @@ function parseSteamUserData(responseText) {
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+
   if (request.action === 'fetchSteamUserData') {
     fetchSteamUserData()
       .then(userData => {
@@ -280,6 +283,248 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+async function fetchAppDetails(appIds) {
+  if (!appIds || appIds.length === 0) {
+    console.log('No app IDs to fetch');
+    return {};
+  }
+
+  console.log(`Fetching details for ${appIds.length} apps:`, appIds.slice(0, 10));
+
+  const appDetailsCache = {};
+  const batchSize = 5; // Reduce batch size for better reliability
+
+  for (let i = 0; i < appIds.length; i += batchSize) {
+    const batch = appIds.slice(i, i + batchSize);
+    const appIdsString = batch.join(',');
+    const url = `https://store.steampowered.com/api/appdetails?appids=${appIdsString}&l=japanese&cc=JP`;
+
+    console.log(`Fetching batch ${i + 1}-${Math.min(i + batchSize, appIds.length)}: ${url}`);
+
+    try {
+      // Try individual requests instead of batch requests
+      const responses = [];
+      for (const appId of batch) {
+        try {
+          const singleUrl = `https://store.steampowered.com/api/appdetails?appids=${appId}&cc=JP`;
+          console.log(`Fetching individual app ${appId}: ${singleUrl}`);
+
+          const singleResponse = await fetch(singleUrl, {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          if (singleResponse.ok) {
+            const singleData = await singleResponse.json();
+            console.log(`Full response for app ${appId}:`, singleData);
+
+            if (singleData[appId]) {
+              if (singleData[appId].success && singleData[appId].data) {
+                const appData = singleData[appId].data;
+                appDetailsCache[appId] = {
+                  name: appData.name,
+                  type: appData.type,
+                  is_free: appData.is_free,
+                  developers: appData.developers,
+                  publishers: appData.publishers,
+                  categories: appData.categories,
+                  genres: appData.genres,
+                  release_date: appData.release_date
+                };
+                console.log(`Successfully cached app ${appId}: ${appData.name}`);
+              } else {
+                console.log(`App ${appId} failed - success: ${singleData[appId].success}`);
+                console.log(`Failure reason:`, singleData[appId]);
+
+                // For failed apps, create a fallback entry
+                appDetailsCache[appId] = {
+                  name: `[削除済み] App ${appId}`,
+                  type: 'unknown',
+                  is_free: null,
+                  developers: ['不明'],
+                  publishers: ['不明'],
+                  categories: [],
+                  genres: [{ id: 'unknown', description: '削除済みアプリ' }],
+                  release_date: { coming_soon: false, date: '不明' }
+                };
+                console.log(`Created fallback entry for deleted app ${appId}`);
+              }
+            } else {
+              console.log(`No response data for app ${appId} in:`, Object.keys(singleData));
+
+              // Create fallback for no response data
+              appDetailsCache[appId] = {
+                name: `[不明] App ${appId}`,
+                type: 'unknown',
+                is_free: null,
+                developers: ['不明'],
+                publishers: ['不明'],
+                categories: [],
+                genres: [{ id: 'unknown', description: '情報取得失敗' }],
+                release_date: { coming_soon: false, date: '不明' }
+              };
+              console.log(`Created fallback entry for no-data app ${appId}`);
+            }
+          } else {
+            console.error(`HTTP ${singleResponse.status} for app ${appId}`);
+            const errorText = await singleResponse.text();
+            console.error(`Error response for ${appId}:`, errorText.substring(0, 200));
+
+            // Create fallback for HTTP error
+            appDetailsCache[appId] = {
+              name: `[エラー] App ${appId}`,
+              type: 'unknown',
+              is_free: null,
+              developers: ['不明'],
+              publishers: ['不明'],
+              categories: [],
+              genres: [{ id: 'unknown', description: `HTTPエラー ${singleResponse.status}` }],
+              release_date: { coming_soon: false, date: '不明' }
+            };
+            console.log(`Created fallback entry for HTTP error app ${appId}`);
+          }
+
+          // Delay between individual requests
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+        } catch (singleError) {
+          console.error(`Error fetching app ${appId}:`, singleError);
+
+          // Create fallback for network/fetch error
+          appDetailsCache[appId] = {
+            name: `[接続エラー] App ${appId}`,
+            type: 'unknown',
+            is_free: null,
+            developers: ['不明'],
+            publishers: ['不明'],
+            categories: [],
+            genres: [{ id: 'unknown', description: '接続エラー' }],
+            release_date: { coming_soon: false, date: '不明' }
+          };
+          console.log(`Created fallback entry for network error app ${appId}`);
+        }
+      }
+
+      continue; // Skip the batch request code below
+
+      console.log(`Response status: ${response.status} for batch ${i + 1}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Response data keys:`, Object.keys(data));
+
+        for (const appId of batch) {
+          console.log(`Processing app ${appId}:`, {
+            exists: !!data[appId],
+            success: data[appId]?.success,
+            hasData: !!data[appId]?.data
+          });
+
+          if (data[appId] && data[appId].success && data[appId].data) {
+            const appData = data[appId].data;
+            appDetailsCache[appId] = {
+              name: appData.name,
+              type: appData.type,
+              is_free: appData.is_free,
+              developers: appData.developers,
+              publishers: appData.publishers,
+              categories: appData.categories,
+              genres: appData.genres,
+              release_date: appData.release_date
+            };
+            console.log(`Successfully cached app ${appId}: ${appData.name}`);
+          } else {
+            console.log(`Failed to get data for app ${appId}:`, data[appId]);
+          }
+        }
+      } else {
+        console.error(`HTTP ${response.status} for batch ${i + 1}`);
+        const responseText = await response.text();
+        console.error(`Error response body:`, responseText);
+      }
+
+      // Longer delay between requests
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+    } catch (error) {
+      console.error(`Error fetching app details for batch ${i}-${i + batchSize}:`, error);
+    }
+  }
+
+  console.log(`Final cache contains ${Object.keys(appDetailsCache).length} apps:`, Object.keys(appDetailsCache));
+  return appDetailsCache;
+}
+
+async function enrichGameData(userData) {
+  if (!userData.ownedGames || userData.ownedGames.length === 0) {
+    console.log('No owned games to enrich');
+    return userData;
+  }
+
+  console.log(`Starting enrichment for ${userData.ownedGames.length} owned games`);
+
+  // Get all owned games
+  const appIds = userData.ownedGames.map(game => game.appId);
+  console.log('App IDs to enrich (all games):', appIds);
+
+  try {
+    const appDetails = await fetchAppDetails(appIds);
+    console.log('App details received:', appDetails);
+
+    console.log('Available app details:', Object.keys(appDetails));
+
+    userData.ownedGames = userData.ownedGames.map(game => {
+      if (appDetails[game.appId]) {
+        console.log(`Enriching game ${game.appId} with:`, appDetails[game.appId].name);
+        return {
+          ...game,
+          name: appDetails[game.appId].name,
+          type: appDetails[game.appId].type,
+          developers: appDetails[game.appId].developers,
+          genres: appDetails[game.appId].genres
+        };
+      } else {
+        console.log(`No details found for game ${game.appId} (available: ${Object.keys(appDetails).join(', ')})`);
+      }
+      return game;
+    });
+  } catch (error) {
+    console.error('Error during game enrichment:', error);
+    // Continue without enrichment if API fails
+  }
+
+  // Also enrich wishlist if available
+  if (userData.wishlist && userData.wishlist.length > 0) {
+    console.log(`Starting enrichment for ${userData.wishlist.length} wishlist items`);
+    const wishlistAppIds = userData.wishlist.map(item => item.appId);
+
+    try {
+      const wishlistDetails = await fetchAppDetails(wishlistAppIds);
+      console.log('Wishlist details received:', wishlistDetails);
+
+      userData.wishlist = userData.wishlist.map(item => {
+        if (wishlistDetails[item.appId]) {
+          return {
+            ...item,
+            name: wishlistDetails[item.appId].name,
+            type: wishlistDetails[item.appId].type,
+            developers: wishlistDetails[item.appId].developers,
+            genres: wishlistDetails[item.appId].genres
+          };
+        }
+        return item;
+      });
+    } catch (error) {
+      console.error('Error during wishlist enrichment:', error);
+    }
+  }
+
+  console.log('Enrichment completed');
+  return userData;
+}
+
 async function fetchSteamUserDataManual(steamId) {
   const now = Date.now();
 
@@ -307,7 +552,9 @@ async function fetchSteamUserDataManual(steamId) {
     }
 
     const responseText = await response.text();
-    const userData = parseSteamUserData(responseText);
+    let userData = parseSteamUserData(responseText);
+
+    userData = await enrichGameData(userData);
 
     steamUserData = {
       ...userData,
