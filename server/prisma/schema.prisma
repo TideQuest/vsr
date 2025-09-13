@@ -1,0 +1,40 @@
+// Prisma schema for ZK Steam prototype
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  walletAddress String?  @unique
+  steamId       String?  @unique
+  createdAt     DateTime @default(now())
+  proofs        Proof[]
+}
+
+model Game {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  proofs    Proof[]
+}
+
+model Proof {
+  id         String   @id @default(uuid())
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  game       Game?    @relation(fields: [gameId], references: [id])
+  gameId     String?
+  provider   String
+  verified   Boolean  @default(false)
+  proofJson  Json
+  claimedAt  DateTime @default(now())
+  createdAt  DateTime @default(now())
+}
+
