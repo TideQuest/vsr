@@ -1,1 +1,39 @@
+# Node / general
+node_modules/
+dist/
+.DS_Store
+*.log
+pnpm-lock.yaml
+
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Private keys / credentials
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ecdsa
+id_ed25519
+*.ppk
+*.crt
+*.cer
+server.key
+client.key
+
+# Sensitive dirs
+secrets/
+credentials/
+private/
+.ssh/
 tmp/
+
+# Prisma
+server/prisma/dev.db
+server/prisma/*.db-journal
+
+# VS Code
+.vscode/

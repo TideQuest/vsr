@@ -1,0 +1,42 @@
+{
+  "name": "zk-steam-proto-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@8.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "lint": "eslint .",
+    "test": "vitest --run",
+    "format": "prettier -w .",
+    "migrate": "prisma migrate deploy || prisma db push",
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "^0.2.22",
+    "@langchain/ollama": "^0.1.0",
+    "@prisma/client": "^5.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "zod": "^3.23.8",
+    "@reclaimprotocol/js-sdk": "^1.16.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.9",
+    "eslint": "^9.10.0",
+    "prettier": "^3.3.3",
+    "prisma": "^5.19.0",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}
+
