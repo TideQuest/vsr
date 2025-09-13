@@ -358,8 +358,104 @@ async function runExtraction() {
   }
 }
 
+// ネットワーク監視の設定 (Manifest v3対応、簡素化)
+function setupNetworkInterception() {
+  console.log('Setting up simplified network interception...');
+
+  // XMLHttpRequestの傍受
+  const originalXHRSend = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function(data) {
+    const xhr = this;
+    const url = xhr.responseURL || this._url;
+
+    xhr.addEventListener('load', function() {
+      if (xhr.status === 200 && isAmazonOrderUrl(url)) {
+        console.log('Amazon XHR intercepted:', url);
+
+        setTimeout(() => {
+          try {
+            const responseData = {
+              url: url,
+              responseText: xhr.responseText,
+              status: xhr.status,
+              timestamp: new Date().toISOString()
+            };
+
+            chrome.runtime.sendMessage({
+              action: 'network_data_captured',
+              data: responseData
+            }).catch(() => {});
+          } catch (error) {
+            console.error('Error processing XHR:', error);
+          }
+        }, 100);
+      }
+    });
+
+    return originalXHRSend.apply(this, arguments);
+  };
+
+  // fetchの傍受
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options = {}) {
+    return originalFetch(url, options).then(response => {
+      if (isAmazonOrderUrl(url) && response.ok) {
+        console.log('Amazon fetch intercepted:', url);
+
+        // 非同期でレスポンス処理
+        response.clone().text().then(responseText => {
+          try {
+            const responseData = {
+              url: url,
+              responseText: responseText,
+              status: response.status,
+              timestamp: new Date().toISOString()
+            };
+
+            chrome.runtime.sendMessage({
+              action: 'network_data_captured',
+              data: responseData
+            }).catch(() => {});
+          } catch (error) {
+            console.error('Error processing fetch:', error);
+          }
+        }).catch(() => {});
+      }
+
+      return response;
+    });
+  };
+}
+
+// Amazon注文関連のURLかチェック
+function isAmazonOrderUrl(url) {
+  if (!url) return false;
+
+  const orderKeywords = [
+    'order-history',
+    'your-orders',
+    'orders',
+    'purchase',
+    'shipment',
+    'delivery',
+    'order-details',
+    'gp/your-account',
+    'gp/css'
+  ];
+
+  const lowerUrl = url.toLowerCase();
+  return orderKeywords.some(keyword => lowerUrl.includes(keyword)) &&
+         (lowerUrl.includes('amazon.com') || lowerUrl.includes('amazon.co.jp') ||
+          lowerUrl.includes('amazon.de') || lowerUrl.includes('amazon.fr') ||
+          lowerUrl.includes('amazon.it') || lowerUrl.includes('amazon.es') ||
+          lowerUrl.includes('amazon.co.uk'));
+}
+
 // 注入済みマーカー
 window.amazonExtractorInjected = true;
+
+// ネットワーク監視を開始
+setupNetworkInterception();
 
 // ページ読み込み完了後に実行
 if (document.readyState === 'loading') {
@@ -377,6 +473,20 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       sendResponse({success: true, ordersCount: orders.length});
     });
     return true; // 非同期レスポンスを示す
+  }
+
+  if (request.action === 'amazon_request_completed') {
+    console.log('Amazon request completed notification from background:', request.url);
+    // 追加の処理が必要な場合はここで実行
+    sendResponse({success: true});
+    return true;
+  }
+
+  if (request.action === 'start_network_monitoring') {
+    console.log('Starting enhanced network monitoring...');
+    setupNetworkInterception();
+    sendResponse({success: true});
+    return true;
   }
 });
 

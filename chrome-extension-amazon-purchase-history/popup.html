@@ -17,6 +17,7 @@
         <div class="control-section">
             <button id="extract-btn" class="primary-btn">購入履歴を抽出</button>
             <button id="view-data-btn" class="secondary-btn">抽出データを表示</button>
+            <button id="view-network-btn" class="secondary-btn">ネットワークデータを表示</button>
             <button id="export-btn" class="secondary-btn">JSONでエクスポート</button>
             <button id="clear-btn" class="danger-btn">データをクリア</button>
         </div>
@@ -30,6 +31,15 @@
         <div class="data-section" id="data-section" style="display: none;">
             <h3>抽出データ</h3>
             <div id="orders-list"></div>
+        </div>
+
+        <div class="data-section" id="network-section" style="display: none;">
+            <h3>ネットワークデータ (生データ)</h3>
+            <div class="network-controls">
+                <button id="refresh-network-btn" class="secondary-btn">更新</button>
+                <button id="clear-network-btn" class="danger-btn">ネットワークデータをクリア</button>
+            </div>
+            <div id="network-list"></div>
         </div>
 
         <div class="instructions">
