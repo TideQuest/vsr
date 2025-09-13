@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Steam Purchase History Monitor",
+  "version": "1.0",
+  "description": "Monitor Steam purchase history through network requests",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://store.steampowered.com/*",
+    "https://steamcommunity.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Steam Purchase Monitor"
+  }
+}
