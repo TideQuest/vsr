@@ -275,6 +275,94 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  if (request.action === "getUserDataUrlAndCookies") {
+    (async () => {
+      try {
+        const tabs = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        const currentTab = tabs[0];
+        if (!currentTab) throw new Error("No active tab");
+
+        if (
+          !currentTab.url ||
+          (!currentTab.url.includes("steampowered.com") &&
+            !currentTab.url.includes("steamcommunity.com"))
+        ) {
+          throw new Error("Please visit Steam website first");
+        }
+
+        // Reuse the existing detector to build the userdata URL
+        const userDataInfo = await (async () => {
+          const results = await chrome.scripting.executeScript({
+            target: { tabId: currentTab.id },
+            func: () => {
+              const patterns = [
+                /g_steamID\s*=\s*"(\d+)"/,
+                /g_steamID\s*=\s*'(\d+)'/,
+                /"steamid":\s*"(\d+)"/,
+                /"steamid":\s*(\d+)/,
+                /dynamicstore\/userdata\/\?id=(\d+)/,
+                /steamcommunity\.com\/profiles\/(\d+)/,
+                /COMMUNITY_BASE_URL\s*=\s*"[^"]*\/profiles\/(\d+)/,
+                /"current_steamid":\s*"(\d+)"/,
+                /window\.g_steamID\s*=\s*"(\d+)"/,
+                /var g_steamID\s*=\s*"(\d+)"/,
+              ];
+              const scripts = document.querySelectorAll("script");
+              for (const script of scripts) {
+                const content = script.textContent || script.innerHTML;
+                if (!content) continue;
+                for (const pattern of patterns) {
+                  const match = content.match(pattern);
+                  if (match && match[1]) {
+                    const steamId = match[1];
+                    return {
+                      steamId,
+                      url: `https://store.steampowered.com/dynamicstore/userdata/?id=${steamId}&cc=JP`,
+                    };
+                  }
+                }
+              }
+              const currentUrl = window.location.href;
+              const urlMatch = currentUrl.match(/\/profiles\/(\d+)/);
+              if (urlMatch && urlMatch[1]) {
+                const steamId = urlMatch[1];
+                return {
+                  steamId,
+                  url: `https://store.steampowered.com/dynamicstore/userdata/?id=${steamId}&cc=JP`,
+                };
+              }
+              return null;
+            },
+          });
+          return results[0]?.result;
+        })();
+
+        if (!userDataInfo) throw new Error("Could not determine Steam user ID");
+
+        // Build cookie string for store.steampowered.com
+        const cookies = await chrome.cookies.getAll({
+          domain: "steampowered.com",
+        });
+        const storeCookies = cookies.filter(
+          (c) =>
+            c.domain.endsWith("steampowered.com") ||
+            c.domain.endsWith(".steampowered.com")
+        );
+        const cookieStr = storeCookies
+          .map((c) => `${c.name}=${c.value}`)
+          .join("; ");
+
+        sendResponse({ success: true, data: { ...userDataInfo, cookieStr } });
+      } catch (err) {
+        sendResponse({ success: false, error: err?.message || String(err) });
+      }
+    })();
+    return true;
+  }
+
   if (request.action === 'clearData') {
     steamUserData = null;
     lastFetchTime = 0;
