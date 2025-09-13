@@ -3,6 +3,9 @@ import express from 'express'
 import cors from 'cors'
 import { nl2sqlRouter } from './routes/nl2sql.js'
 import { zkpRouter } from './routes/zkp.js'
+import itemsRouter from './routes/items.js'
+import recommendationsRouter from './routes/recommendations.js'
+import categoriesRouter from './routes/categories.js'
 
 const app = express()
 
@@ -20,6 +23,9 @@ app.get('/api/health', (_req, res) => {
 
 app.use('/api/nl2sql', nl2sqlRouter)
 app.use('/api/zkp', zkpRouter)
+app.use('/api/items', itemsRouter)
+app.use('/api/recommendations', recommendationsRouter)
+app.use('/api/categories', categoriesRouter)
 
 const port = Number(process.env.PORT || 3000)
 app.listen(port, () => {
