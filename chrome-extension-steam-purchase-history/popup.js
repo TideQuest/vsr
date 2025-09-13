@@ -2,8 +2,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const statusEl = document.getElementById('status');
   const dataContainer = document.getElementById('dataContainer');
   const fetchBtn = document.getElementById('fetchBtn');
-  const fetchManualBtn = document.getElementById('fetchManualBtn');
-  const manualSteamIdInput = document.getElementById('manualSteamId');
   const clearBtn = document.getElementById('clearBtn');
   const tabs = document.querySelectorAll('.tab');
 
@@ -81,10 +79,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     userData.ownedGames.slice(0, 50).forEach(game => {
       const playtime = game.playtime ? `${Math.round(game.playtime / 60)} hours` : 'Unknown playtime';
+      const gameName = game.name && game.name !== `App ${game.appId}` ? game.name : `App ${game.appId}`;
+      const developers = game.developers && game.developers.length > 0 ? ` (${game.developers.join(', ')})` : '';
+      const type = game.type ? ` [${game.type}]` : '';
+      const genres = game.genres && game.genres.length > 0 ? ` | ${game.genres.map(g => g.description).join(', ')}` : '';
+
       html += `
         <div class="game-item">
-          <div><strong>${game.name}</strong></div>
-          <div>App ID: ${game.appId} | Playtime: ${playtime}</div>
+          <div><strong>${gameName}${developers}</strong>${type}</div>
+          <div>App ID: ${game.appId} | Playtime: ${playtime}${genres}</div>
           ${game.source ? `<div style="font-size: 10px; color: #888;">Source: ${game.source}</div>` : ''}
         </div>
       `;
@@ -106,9 +109,12 @@ document.addEventListener('DOMContentLoaded', function() {
     let html = `<div style="margin-bottom: 10px;"><strong>Wishlist (${userData.wishlist.length})</strong></div>`;
 
     userData.wishlist.slice(0, 30).forEach(item => {
+      const itemName = item.name && item.name !== `App ${item.appId}` ? item.name : `App ${item.appId}`;
+      const type = item.type ? ` [${item.type}]` : '';
+
       html += `
         <div class="game-item">
-          <div><strong>${item.name}</strong></div>
+          <div><strong>${itemName}</strong>${type}</div>
           <div>App ID: ${item.appId} | Priority: ${item.priority}</div>
           ${item.source ? `<div style="font-size: 10px; color: #888;">Source: ${item.source}</div>` : ''}
         </div>
@@ -169,15 +175,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function fetchSteamData(manualSteamId = null) {
+  function fetchSteamData() {
     showLoading();
 
-    const action = manualSteamId ? 'fetchSteamUserDataManual' : 'fetchSteamUserData';
-    const message = manualSteamId ?
-      { action: action, steamId: manualSteamId } :
-      { action: action };
-
-    chrome.runtime.sendMessage(message, (response) => {
+    chrome.runtime.sendMessage({ action: 'fetchSteamUserData' }, (response) => {
       hideLoading();
 
       if (response.success) {
@@ -191,21 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  function fetchManualSteamData() {
-    const steamId = manualSteamIdInput.value.trim();
-
-    if (!steamId) {
-      updateStatus('Please enter a Steam ID', true);
-      return;
-    }
-
-    if (!/^\d{17}$/.test(steamId)) {
-      updateStatus('Steam ID must be 17 digits', true);
-      return;
-    }
-
-    fetchSteamData(steamId);
-  }
 
   function clearData() {
     chrome.runtime.sendMessage({ action: 'clearData' }, (response) => {
@@ -226,8 +212,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  fetchBtn.addEventListener('click', () => fetchSteamData());
-  fetchManualBtn.addEventListener('click', fetchManualSteamData);
+  fetchBtn.addEventListener('click', fetchSteamData);
   clearBtn.addEventListener('click', clearData);
 
   loadExistingData();
