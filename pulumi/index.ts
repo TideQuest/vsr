@@ -116,7 +116,7 @@ RECLAIM_APP_SECRET=your_reclaim_app_secret_here
 RECLAIM_PROVIDER_ID=your_provider_id_here
 
 # ZKP Configuration
-ZKP_MOCK=true
+ZKP_MOCK=false
 
 # Server Configuration
 PORT=3000
