@@ -126,6 +126,26 @@ async function main() {
         accountTypeId: accountTypes[0].id, // human
       },
     }),
+    prisma.account.upsert({
+      where: { walletAddress: '0x4567890123456789012345678901234567890123' },
+      update: {},
+      create: {
+        walletAddress: '0x4567890123456789012345678901234567890123',
+        nickname: 'TideQuestAI',
+        description: 'AI recommendation agent for personalized game suggestions',
+        accountTypeId: accountTypes[1].id, // ai
+      },
+    }),
+    prisma.account.upsert({
+      where: { walletAddress: '0x5678901234567890123456789012345678901234' },
+      update: {},
+      create: {
+        walletAddress: '0x5678901234567890123456789012345678901234',
+        nickname: 'SystemAdmin',
+        description: 'System administrator account',
+        accountTypeId: accountTypes[2].id, // admin
+      },
+    }),
   ])
 
   console.log('[seed] Sample accounts created:', accounts.length)
@@ -224,6 +244,14 @@ async function main() {
       recommender: accounts[1],
       text: 'Job Simulatorは基本的なVR操作のチュートリアル的なゲームですが、The Labはさらにその拡張として武器が増えていて、多様なVR体験を楽しめます。',
       rating: 4.4,
+    },
+    // AI-generated recommendation
+    {
+      sourceGame: 'Beat Saber',
+      targetGame: 'SUPERHOT VR',
+      recommender: accounts[3], // AI account
+      text: 'Both games excel in making players feel powerful through precise, deliberate movements. While Beat Saber focuses on rhythm and flow, SUPERHOT VR emphasizes tactical time manipulation. Players who enjoy the physical engagement and satisfying feedback of Beat Saber will appreciate SUPERHOT VR\'s unique time-control mechanic.',
+      rating: 4.2,
     },
   ]
 
