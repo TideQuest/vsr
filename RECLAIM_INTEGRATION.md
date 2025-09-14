@@ -57,7 +57,7 @@ The server will run on `http://localhost:3000`
 1. Open Chrome and navigate to `chrome://extensions/`
 2. Enable "Developer mode" in the top right
 3. Click "Load unpacked"
-4. Select the `chrome-extension-steam-purchase-history` directory
+4. Select the `chrome-extension/steam-purchase-history` directory
 5. The extension will be added to your browser
 
 #### Using the Extension
