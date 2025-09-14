@@ -13,8 +13,8 @@ VSR is a verifiable social recommendation system using zero-knowledge proofs wit
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/TideQuest/ethtokyo2025-sandbox.git
-   cd ethtokyo2025-sandbox
+   git clone https://github.com/TideQuest/vsr.git
+   cd vsr
    ```
 
 2. **Configure environment variables**
