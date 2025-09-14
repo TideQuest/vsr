@@ -9,27 +9,27 @@ async function main() {
   // Create AccountTypes
   const accountTypes = await Promise.all([
     prisma.accountType.upsert({
-      where: { name: 'Player' },
+      where: { name: 'human' },
       update: {},
       create: {
-        name: 'Player',
-        description: 'Steam player account',
+        name: 'human',
+        description: 'Human user account',
       },
     }),
     prisma.accountType.upsert({
-      where: { name: 'Developer' },
+      where: { name: 'ai' },
       update: {},
       create: {
-        name: 'Developer',
-        description: 'Game developer account',
+        name: 'ai',
+        description: 'AI agent account',
       },
     }),
     prisma.accountType.upsert({
-      where: { name: 'AI' },
+      where: { name: 'admin' },
       update: {},
       create: {
-        name: 'AI',
-        description: 'AI recommendation agent account',
+        name: 'admin',
+        description: 'Administrator account',
       },
     }),
   ])
@@ -103,7 +103,7 @@ async function main() {
         walletAddress: '0x1234567890123456789012345678901234567890',
         nickname: 'SamplePlayer1',
         description: 'Loves farming and casual games',
-        accountTypeId: accountTypes[0].id, // Player
+        accountTypeId: accountTypes[0].id, // human
       },
     }),
     prisma.account.upsert({
@@ -113,7 +113,7 @@ async function main() {
         walletAddress: '0x2345678901234567890123456789012345678901',
         nickname: 'SamplePlayer2',
         description: 'VR enthusiast and rhythm game lover',
-        accountTypeId: accountTypes[0].id, // Player
+        accountTypeId: accountTypes[0].id, // human
       },
     }),
     prisma.account.upsert({
@@ -123,7 +123,7 @@ async function main() {
         walletAddress: '0x3456789012345678901234567890123456789012',
         nickname: 'HardcoreGamer',
         description: 'Enjoys challenging games and Souls-like titles',
-        accountTypeId: accountTypes[0].id, // Player
+        accountTypeId: accountTypes[0].id, // human
       },
     }),
   ])
