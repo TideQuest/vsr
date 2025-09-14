@@ -4,15 +4,12 @@ const BACKEND_API_URL = 'http://localhost:3000/api/zkp';
 document.addEventListener("DOMContentLoaded", function () {
   const statusEl = document.getElementById("status");
   const dataContainer = document.getElementById("dataContainer");
-  const fetchBtn = document.getElementById("fetchBtn");
-  const clearBtn = document.getElementById("clearBtn");
   const tabs = document.querySelectorAll(".tab");
   const genProofBtn = document.getElementById("genProofBtn");
-  const appIdInput = document.getElementById("appIdInput");
+  const appSelect = document.getElementById("appSelect");
   const proofStatus = document.getElementById("proofStatus");
   const proofOutput = document.getElementById("proofOutput");
-  const ethStatus = document.getElementById("ethStatus");
-  const checkEthBtn = document.getElementById("checkEthBtn");
+  // Ethereum UI removed
 
   let currentTab = "overview";
   let userData = null;
@@ -26,23 +23,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function showLoading() {
     updateStatus("Fetching Steam data...");
-    fetchBtn.disabled = true;
-    fetchBtn.textContent = "Fetching...";
-    dataContainer.innerHTML =
-      '<div class="loading">Loading Steam user data...</div>';
+    dataContainer.innerHTML = '<div class="loading">Loading Steam user data...</div>';
   }
 
   function hideLoading() {
-    fetchBtn.disabled = false;
-    fetchBtn.textContent = "Fetch Steam User Data";
+    // No-op: buttons removed; keep for symmetry
   }
 
-  function setEthStatus(message, isError = false) {
-    ethStatus.textContent = message;
-    ethStatus.style.backgroundColor = isError ? "#ffebee" : "#f9f9f9";
-    ethStatus.style.borderColor = isError ? "#e74c3c" : "#ddd";
-    ethStatus.style.color = isError ? "#e74c3c" : "#333";
-  }
+  // Ethereum status removed
 
   function setProofStatus(message, isError = false) {
     proofStatus.style.display = "block";
@@ -78,10 +66,6 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
       <div class="summary">
         <span>Games: ${userData.ownedGames.length}</span>
-        <span>Wishlist: ${userData.wishlist.length}</span>
-        <span>Tags: ${
-          userData.recommendedTags ? userData.recommendedTags.length : 0
-        }</span>
       </div>
       ${
         userData.hardwareUsed && userData.hardwareUsed.length > 0
@@ -92,18 +76,7 @@ document.addEventListener("DOMContentLoaded", function () {
       `
           : ""
       }
-      ${
-        userData.recommendedTags && userData.recommendedTags.length > 0
-          ? `
-        <div class="data-item">
-          <strong>Top Tags:</strong> ${userData.recommendedTags
-            .slice(0, 5)
-            .map((tag) => tag.name)
-            .join(", ")}
-        </div>
-      `
-          : ""
-      }
+      
       <div class="data-item">
         <strong>Data Source:</strong> ${userData.sourceUrl}
       </div>
@@ -162,68 +135,7 @@ document.addEventListener("DOMContentLoaded", function () {
     dataContainer.innerHTML = html;
   }
 
-  function displayWishlist() {
-    if (!userData || !userData.wishlist.length) {
-      dataContainer.innerHTML =
-        '<div class="no-data">No wishlist items found</div>';
-      return;
-    }
-
-    let html = `<div style="margin-bottom: 10px;"><strong>Wishlist (${userData.wishlist.length})</strong></div>`;
-
-    userData.wishlist.slice(0, 30).forEach((item) => {
-      const itemName =
-        item.name && item.name !== `App ${item.appId}`
-          ? item.name
-          : `App ${item.appId}`;
-      const type = item.type ? ` [${item.type}]` : "";
-
-      html += `
-        <div class="game-item">
-          <div><strong>${itemName}</strong>${type}</div>
-          <div>App ID: ${item.appId} | Priority: ${item.priority}</div>
-          ${
-            item.source
-              ? `<div style="font-size: 10px; color: #888;">Source: ${item.source}</div>`
-              : ""
-          }
-        </div>
-      `;
-    });
-
-    if (userData.wishlist.length > 30) {
-      html += `<div class="no-data">... and ${
-        userData.wishlist.length - 30
-      } more items</div>`;
-    }
-
-    dataContainer.innerHTML = html;
-  }
-
-  function displayTags() {
-    if (
-      !userData ||
-      !userData.recommendedTags ||
-      userData.recommendedTags.length === 0
-    ) {
-      dataContainer.innerHTML =
-        '<div class="no-data">No recommended tags found</div>';
-      return;
-    }
-
-    let html = `<div style="margin-bottom: 10px;"><strong>Recommended Tags (${userData.recommendedTags.length})</strong></div>`;
-
-    userData.recommendedTags.forEach((tag) => {
-      html += `
-        <div class="game-item">
-          <div><strong>${tag.name}</strong></div>
-          <div>Tag ID: ${tag.tagId}</div>
-        </div>
-      `;
-    });
-
-    dataContainer.innerHTML = html;
-  }
+  // Wishlist and Tags views removed
 
   function displayCurrentTab() {
     switch (currentTab) {
@@ -233,12 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
       case "games":
         displayGames();
         break;
-      case "wishlist":
-        displayWishlist();
-        break;
-      case "tags":
-        displayTags();
-        break;
+      
     }
   }
 
@@ -247,13 +154,9 @@ document.addEventListener("DOMContentLoaded", function () {
       if (response) {
         userData = response;
         updateStatus("Data loaded from cache");
+        populateOwnedGamesSelector();
         displayCurrentTab();
       }
-    });
-
-    // Load saved target app ID
-    chrome.storage.local.get(["zk_appid_target"], (res) => {
-      if (res.zk_appid_target) appIdInput.value = res.zk_appid_target;
     });
   }
 
@@ -266,21 +169,11 @@ document.addEventListener("DOMContentLoaded", function () {
       if (response.success) {
         userData = response.data;
         updateStatus("Steam data fetched successfully!");
+        populateOwnedGamesSelector();
         displayCurrentTab();
       } else {
         updateStatus(`Error: ${response.error}`, true);
         dataContainer.innerHTML = `<div class="error">${response.error}</div>`;
-      }
-    });
-  }
-
-  function clearData() {
-    chrome.runtime.sendMessage({ action: "clearData" }, (response) => {
-      if (response.success) {
-        userData = null;
-        updateStatus("Data cleared");
-        dataContainer.innerHTML =
-          '<div class="no-data">Click "Fetch Steam User Data" to get started</div>';
       }
     });
   }
@@ -294,9 +187,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  fetchBtn.addEventListener("click", fetchSteamData);
-  clearBtn.addEventListener("click", clearData);
-
   function sendMessageAsync(message) {
     return new Promise((resolve, reject) => {
       chrome.runtime.sendMessage(message, (resp) => {
@@ -307,38 +197,49 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  async function checkEthAddress() {
-    setEthStatus("Checking connected address...");
-    try {
-      const resp = await sendMessageAsync({ action: "getEthereumAddress" });
-      if (!resp || !resp.success) {
-        setEthStatus(`Failed: ${resp?.error || "unknown error"}`, true);
-        return;
-      }
-      const { connected, account, error } = resp.data || {};
-      if (connected && account) {
-        setEthStatus(`Connected: ${account}`);
-      } else if (error) {
-        setEthStatus(`Not connected (${error})`, true);
-      } else {
-        setEthStatus("No connected wallet on this page");
-      }
-    } catch (e) {
-      setEthStatus(`Error: ${e?.message || String(e)}`, true);
+  // Ethereum-related handlers removed
+
+  function populateOwnedGamesSelector() {
+    if (!appSelect) return;
+    appSelect.innerHTML = "";
+    if (!userData || !userData.ownedGames || userData.ownedGames.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.disabled = true;
+      opt.selected = true;
+      opt.textContent = "No owned games available";
+      appSelect.appendChild(opt);
+      return;
+    }
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.disabled = true;
+    placeholder.selected = true;
+    placeholder.textContent = "Select a game";
+    appSelect.appendChild(placeholder);
+
+    const sorted = [...userData.ownedGames].sort((a, b) => {
+      const an = (a.name || `App ${a.appId}`).toLowerCase();
+      const bn = (b.name || `App ${b.appId}`).toLowerCase();
+      return an.localeCompare(bn);
+    });
+    for (const game of sorted) {
+      const option = document.createElement("option");
+      option.value = game.appId;
+      const gameName = game.name && game.name !== `App ${game.appId}` ? game.name : `App ${game.appId}`;
+      option.textContent = `${gameName} (${game.appId})`;
+      appSelect.appendChild(option);
     }
   }
-
-  checkEthBtn?.addEventListener("click", checkEthAddress);
 
   genProofBtn.addEventListener("click", async () => {
     proofOutput.style.display = 'none';
     setProofStatus("Preparing proof request...");
 
-    const targetAppId = (appIdInput.value || '').trim();
-
-    // Optional: Store target app ID for convenience
-    if (targetAppId) {
-      chrome.storage.local.set({ zk_appid_target: targetAppId });
+    const targetAppId = (appSelect?.value || '').trim();
+    if (!targetAppId) {
+      setProofStatus("Please select a game from Owned Games", true);
+      return;
     }
 
     // Ask background for the current user's URL and cookies
@@ -363,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
             steamId,
             userDataUrl: url,
             cookieStr,
-            targetAppId: targetAppId || undefined
+            targetAppId
           })
         });
 
@@ -384,5 +285,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
+  // Load any cached data for quick display, then auto-fetch fresh data
   loadExistingData();
+  fetchSteamData();
 });
