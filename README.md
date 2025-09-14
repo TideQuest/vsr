@@ -100,6 +100,6 @@ docker-compose up -d db
 
 - `client/`: React + TypeScript frontend
 - `server/`: Node.js + Express + Prisma backend
-- `chrome-extension-*/`: Chrome extensions for Steam purchase history extraction
+- `chrome-extension/`: Chrome extensions for Steam purchase history extraction
 - `.devcontainer/`: VS Code Dev Container configuration
 - `docker-compose.yml`: Docker Compose configuration
