@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Pulumi
+Pulumi.*.yaml
+!Pulumi.yaml
+.pulumi/
+
+# TypeScript output
+bin/
+*.js
+*.js.map
+*.d.ts
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
