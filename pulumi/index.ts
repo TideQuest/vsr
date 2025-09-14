@@ -234,7 +234,7 @@ const frontendBackendService = new gcp.compute.BackendService("frontend-backend-
     protocol: "HTTP",
     portName: "frontend",
     timeoutSec: 30,
-    healthChecks: [frontendHealthCheck.selfLink],
+    healthChecks: frontendHealthCheck.selfLink,
     backends: [{
         group: instanceGroup.selfLink,
         balancingMode: "UTILIZATION",
@@ -247,7 +247,7 @@ const apiBackendService = new gcp.compute.BackendService("api-backend-service", 
     protocol: "HTTP",
     portName: "backend",
     timeoutSec: 30,
-    healthChecks: [backendHealthCheck.selfLink],
+    healthChecks: backendHealthCheck.selfLink,
     backends: [{
         group: instanceGroup.selfLink,
         balancingMode: "UTILIZATION",
