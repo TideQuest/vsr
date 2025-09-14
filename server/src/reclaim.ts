@@ -3,7 +3,6 @@
 // Switch to real mode by setting RECLAIM_* env vars and ZKP_MOCK=false
 
 import { z } from 'zod'
-import { ReclaimClient } from '@reclaimprotocol/zk-fetch'
 
 // Check ZKP_MOCK at runtime instead of module load time
 function isZkpMock(): boolean {
@@ -197,7 +196,8 @@ export async function createSteamProof(params: {
   }
 
   try {
-    // Initialize Reclaim client
+    // Initialize Reclaim client with dynamic import to avoid loading problematic dependencies
+    const { ReclaimClient } = await import('@reclaimprotocol/zk-fetch')
     const client = new ReclaimClient(appId, appSecret)
 
     // Build regex to match Steam owned apps
