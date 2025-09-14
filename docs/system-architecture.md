@@ -11,7 +11,6 @@ graph TB
 
     subgraph "API Layer"
         API[API Server<br/>Node.js/Express]
-        AUTH[Authentication<br/>JWT/Wallet]
     end
 
     subgraph "Business Logic Layer"
@@ -22,18 +21,15 @@ graph TB
 
     subgraph "Data Layer"
         DB[(Database<br/>PostgreSQL)]
-        CACHE[(Cache<br/>Redis)]
     end
 
     subgraph "External Services"
         RECLAIM[Reclaim Protocol]
         BLOCKCHAIN[Blockchain<br/>Networks]
-        IPFS[IPFS<br/>Distributed Storage]
     end
 
     WEB --> API
     EXT --> API
-    API --> AUTH
     API --> PROOF
     API --> VERIFY
     API --> USER
@@ -42,11 +38,8 @@ graph TB
     VERIFY --> DB
     USER --> DB
 
-    API --> CACHE
-
     VERIFY --> RECLAIM
     PROOF --> BLOCKCHAIN
-    PROOF --> IPFS
 
     classDef frontend fill:#e1f5fe
     classDef api fill:#f3e5f5
@@ -84,7 +77,7 @@ graph TB
 ### API Layer
 
 #### API Server
-- **Technology**: Node.js/Express
+- **Technology**: Node.js/Next.js
 - **Purpose**: Central API gateway
 - **Responsibilities**:
   - Request routing
@@ -93,7 +86,7 @@ graph TB
   - Rate limiting
 
 #### Authentication
-- **Technology**: JWT + Wallet signatures
+- **Technology**: Wallet signatures
 - **Purpose**: User authentication and authorization
 - **Features**:
   - Wallet-based login
@@ -115,7 +108,6 @@ graph TB
 - **Responsibilities**:
   - Reclaim Protocol integration
   - Verification result processing
-  - Trust score calculation
 
 #### User Service
 - **Purpose**: User account management
@@ -123,6 +115,16 @@ graph TB
   - User registration
   - Profile management
   - Preferences handling
+
+#### Recommendation Service
+- **Purpose**: Recommend dataset management
+- **Responsibilities**:
+  - Recommend request
+  - Recommend result
+
+#### AI Agent Service
+- **Purpose**: 
+- **Responsibilities**:
 
 ### Data Layer
 
@@ -134,13 +136,6 @@ graph TB
   - Verification results
   - Session data
 
-#### Cache (Redis)
-- **Purpose**: Performance optimization
-- **Contents**:
-  - Session tokens
-  - Frequently accessed data
-  - Rate limiting counters
-
 ### External Services
 
 #### Reclaim Protocol
@@ -150,12 +145,6 @@ graph TB
 #### Blockchain Networks
 - **Purpose**: Decentralized verification and storage
 - **Supported**: Ethereum, Polygon, etc.
-
-#### IPFS
-- **Purpose**: Distributed file storage
-- **Use Cases**:
-  - Proof metadata storage
-  - Large file handling
 
 ## Data Flow
 
