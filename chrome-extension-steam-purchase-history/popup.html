@@ -158,15 +158,10 @@
   <div style="margin-top:12px; border-top:1px solid #eee; padding-top:12px;">
     <div style="font-weight:bold; margin-bottom:6px;">ZK Proof (Reclaim)</div>
     <div style="display:flex; gap:6px; margin-bottom:6px;">
-      <input id="appIdInput" type="text" placeholder="App ID (e.g. 431730)" style="flex:1; padding:6px; font-size:12px;" />
+      <input id="appIdInput" type="text" placeholder="App ID (e.g. 730 for CS:GO)" style="flex:1; padding:6px; font-size:12px;" />
+      <small style="color:#666; font-size:11px;">Optional: Prove ownership of a specific game</small>
     </div>
-    <div style="display:flex; gap:6px; margin-bottom:6px;">
-      <input id="reclaimAppId" type="text" placeholder="Reclaim Application ID" style="flex:1; padding:6px; font-size:12px;" />
-    </div>
-    <div style="display:flex; gap:6px; margin-bottom:6px;">
-      <input id="reclaimAppSecret" type="password" placeholder="Reclaim Application Secret" style="flex:1; padding:6px; font-size:12px;" />
-    </div>
-    <button id="genProofBtn">Generate ZK Proof</button>
+    <button id="genProofBtn">Generate ZK Proof (via Backend)</button>
     <div id="proofStatus" class="status" style="margin-top:8px; display:none;"></div>
     <pre id="proofOutput" style="max-height:160px; overflow:auto; background:#f9f9f9; border:1px solid #ddd; padding:8px; font-size:11px; display:none;"></pre>
   </div>
@@ -182,6 +177,7 @@
     <div class="no-data">Click "Fetch Steam User Data" to get started</div>
   </div>
 
-  <script src="dist/popup.bundle.js"></script>
+  <script src="popup.js"></script>
+  <script src="popup-reclaim.js"></script>
 </body>
 </html>

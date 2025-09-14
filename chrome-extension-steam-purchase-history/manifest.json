@@ -11,7 +11,8 @@
   ],
   "host_permissions": [
     "https://store.steampowered.com/*",
-    "https://steamcommunity.com/*"
+    "https://steamcommunity.com/*",
+    "http://localhost:3000/*"
   ],
   "background": {
     "service_worker": "background.js"

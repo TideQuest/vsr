@@ -3,6 +3,7 @@
 // Switch to real mode by setting RECLAIM_* env vars and ZKP_MOCK=false
 
 import { z } from 'zod'
+import { ReclaimClient } from '@reclaimprotocol/zk-fetch'
 
 // Check ZKP_MOCK at runtime instead of module load time
 function isZkpMock(): boolean {
@@ -163,6 +164,113 @@ export async function isProofAlreadyVerified(
     return !!existingProof
   } catch {
     return false
+  }
+}
+
+// Steam-specific proof generation using zkFetch
+export async function createSteamProof(params: {
+  steamId: string
+  userDataUrl: string
+  cookieStr: string
+  targetAppId?: string
+}) {
+  // Check required environment variables
+  const appId = process.env.RECLAIM_APP_ID
+  const appSecret = process.env.RECLAIM_APP_SECRET
+
+  if (!appId || !appSecret) {
+    if (isZkpMock()) {
+      // Return mock proof for development
+      return {
+        success: true,
+        mode: 'mock',
+        proof: {
+          sessionId: 'mock-session-' + Math.random().toString(36).slice(2),
+          steamId: params.steamId,
+          targetAppId: params.targetAppId,
+          timestamp: Date.now(),
+          verified: true
+        }
+      }
+    }
+    throw new Error('Missing RECLAIM_APP_ID or RECLAIM_APP_SECRET environment variables')
+  }
+
+  try {
+    // Initialize Reclaim client
+    const client = new ReclaimClient(appId, appSecret)
+
+    // Build regex to match Steam owned apps
+    let regex = '"rgOwnedApps":\\s*\\[[^\\]]*'
+    if (params.targetAppId) {
+      regex += `\\b${params.targetAppId}\\b`
+    }
+    regex += '[^\\]]*\\]'
+
+    console.log('Creating Steam proof with regex:', regex)
+
+    // Generate proof using zkFetch
+    const proof = await client.zkFetch(
+      params.userDataUrl,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Cookie': params.cookieStr
+        }
+      },
+      {
+        responseMatches: [{
+          type: 'regex',
+          value: regex
+        }]
+      }
+    )
+
+    return {
+      success: true,
+      mode: 'real',
+      proof: proof,
+      steamId: params.steamId,
+      targetAppId: params.targetAppId,
+      timestamp: Date.now()
+    }
+  } catch (error: any) {
+    console.error('Failed to create Steam proof:', error)
+    throw new Error(`Failed to create Steam proof: ${error.message || 'Unknown error'}`)
+  }
+}
+
+// Verify Steam proof
+export async function verifySteamProof(proof: any) {
+  if (isZkpMock()) {
+    return {
+      verified: true,
+      reason: 'mock-mode',
+      steamId: proof.steamId,
+      targetAppId: proof.targetAppId
+    }
+  }
+
+  try {
+    // Use Reclaim SDK to verify the proof
+    const { verifyProof } = await import('@reclaimprotocol/js-sdk')
+    const isValid = await verifyProof(proof)
+
+    return {
+      verified: !!isValid,
+      reason: isValid ? 'verified' : 'invalid',
+      steamId: proof.steamId,
+      targetAppId: proof.targetAppId
+    }
+  } catch (error: any) {
+    console.error('Failed to verify Steam proof:', error)
+    return {
+      verified: false,
+      reason: `verification-error: ${error.message}`,
+      steamId: proof.steamId,
+      targetAppId: proof.targetAppId
+    }
   }
 }
 
