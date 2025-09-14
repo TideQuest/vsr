@@ -3,6 +3,9 @@
 FROM node:20-alpine
 WORKDIR /usr/src/app
 
+# Install Python and build dependencies for native modules
+RUN apk add --no-cache python3 py3-setuptools make g++
+
 # Enable corepack and pnpm
 RUN corepack enable && corepack prepare pnpm@8.15.0 --activate
 
