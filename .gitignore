@@ -37,3 +37,5 @@ server/prisma/*.db-journal
 
 # VS Code
 .vscode/
+
+server/.pnpm-store/

@@ -363,6 +363,49 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 
+  // Get Ethereum address from the currently active tab page context
+  if (request.action === 'getEthereumAddress') {
+    (async () => {
+      try {
+        const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
+        const currentTab = tabs[0];
+        if (!currentTab) throw new Error('No active tab');
+
+        const [result] = await chrome.scripting.executeScript({
+          target: { tabId: currentTab.id },
+          world: 'MAIN',
+          func: async () => {
+            try {
+              const eth = window.ethereum;
+              if (!eth) {
+                return { connected: false, account: null, error: 'No Ethereum provider on page' };
+              }
+              // Prefer eth_accounts to avoid prompting; only returns when already connected
+              let accounts = [];
+              try {
+                accounts = await eth.request({ method: 'eth_accounts' });
+              } catch (e) {
+                // Some providers might restrict eth_accounts; fall back to selectedAddress if present
+                accounts = [];
+              }
+              const account = (accounts && accounts.length) ? accounts[0] : (eth.selectedAddress || null);
+              return { connected: !!account, account };
+            } catch (e) {
+              return { connected: false, account: null, error: e?.message || String(e) };
+            }
+          },
+        });
+
+        sendResponse({ success: true, data: result?.result || { connected: false, account: null } });
+      } catch (e) {
+        sendResponse({ success: false, error: e?.message || String(e) });
+      }
+    })();
+    return true;
+  }
+
+  // No connect flow from extension; read-only address check only.
+
   if (request.action === 'clearData') {
     steamUserData = null;
     lastFetchTime = 0;

@@ -56,7 +56,7 @@ export async function createProofRequest(params: {
 
   try {
     // Real (best-effort): create a request URL via @reclaimprotocol/js-sdk
-    const { Reclaim } = await import('@reclaimprotocol/js-sdk')
+    const { default: Reclaim } = await import('@reclaimprotocol/js-sdk')
     const appId = process.env.RECLAIM_APP_ID
     const appSecret = process.env.RECLAIM_APP_SECRET
 
