@@ -7,7 +7,7 @@ const projectId = config.require("gcp:project");
 const region = config.get("gcp:region") || "asia-northeast1";
 const zone = config.get("gcp:zone") || "asia-northeast1-a";
 const frontendDomain = config.get("frontendDomain") || "vsr-demo.tidequest.net";
-const backendDomain = config.require("backendDomain"); // Must be set within 30 minutes
+const backendDomain = config.get("backendDomain") || "vsr-api.tidequest.net";
 const githubToken = config.getSecret("githubToken"); // Optional for private repos
 
 // Network configuration

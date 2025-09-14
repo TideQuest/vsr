@@ -58,9 +58,9 @@ pulumi config set gcp:project YOUR_PROJECT_ID
 pulumi config set gcp:region asia-northeast1
 pulumi config set gcp:zone asia-northeast1-a
 
-# Domain settings (REQUIRED - set within 30 minutes)
+# Domain settings
 pulumi config set frontendDomain vsr-demo.tidequest.net
-pulumi config set backendDomain YOUR_BACKEND_DOMAIN  # e.g., api.vsr-demo.tidequest.net
+pulumi config set backendDomain vsr-api.tidequest.net
 
 # Optional: for private repos
 pulumi config set --secret githubToken YOUR_GITHUB_TOKEN
@@ -97,7 +97,7 @@ Point both domains to the Load Balancer IP:
 LB_IP=$(pulumi stack output loadBalancerIp)
 echo "Configure DNS for:"
 echo "  - vsr-demo.tidequest.net -> $LB_IP"
-echo "  - YOUR_BACKEND_DOMAIN -> $LB_IP"
+echo "  - vsr-api.tidequest.net -> $LB_IP"
 ```
 
 ### 2. Verify Deployment
@@ -151,7 +151,7 @@ sudo docker-compose up -d
 curl -I http://vsr-demo.tidequest.net
 
 # Backend
-curl -I http://YOUR_BACKEND_DOMAIN/health
+curl -I http://vsr-api.tidequest.net/health
 
 # Ollama
 gcloud compute ssh vsr-instance --zone=asia-northeast1-a \

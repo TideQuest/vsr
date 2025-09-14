@@ -11,5 +11,5 @@ description: VSR Demo Infrastructure on Google Cloud Platform
 # pulumi config set gcp:region asia-northeast1
 # pulumi config set gcp:zone asia-northeast1-a
 # pulumi config set frontendDomain vsr-demo.tidequest.net
-# pulumi config set backendDomain YOUR_BACKEND_DOMAIN
+# pulumi config set backendDomain vsr-api.tidequest.net
 # pulumi config set --secret githubToken YOUR_GITHUB_TOKEN (optional, for private repos)
