@@ -1,0 +1,336 @@
+openapi: 3.0.3
+info:
+  title: TideQuest API
+  description: API specification for TideQuest - Decentralized identity verification platform
+  version: 1.0.0
+  contact:
+    name: TideQuest Team
+    url: https://github.com/TideQuest/ethtokyo2025-sandbox
+servers:
+  - url: http://localhost:3001
+    description: Development server
+  - url: https://api.tidequest.app
+    description: Production server
+
+paths:
+  /auth/login:
+    post:
+      summary: User login with wallet
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                wallet_address:
+                  type: string
+                  example: "0x1234567890123456789012345678901234567890"
+                signature:
+                  type: string
+                  example: "0xabcdef..."
+              required:
+                - wallet_address
+                - signature
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+
+  /auth/logout:
+    post:
+      summary: User logout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+
+  /proofs:
+    get:
+      summary: Get user's proofs
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, verified, failed]
+          description: Filter by proof status
+        - in: query
+          name: provider
+          schema:
+            type: string
+          description: Filter by proof provider
+      responses:
+        '200':
+          description: List of proofs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  proofs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Proof'
+
+    post:
+      summary: Create new proof
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "GitHub Account Verification"
+                description:
+                  type: string
+                  example: "Proof of GitHub account ownership"
+                provider:
+                  type: string
+                  example: "reclaim"
+                proof_data:
+                  type: object
+                  description: Raw proof data from provider
+              required:
+                - title
+                - provider
+                - proof_data
+      responses:
+        '201':
+          description: Proof created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  proof:
+                    $ref: '#/components/schemas/Proof'
+
+  /proofs/{proofId}:
+    get:
+      summary: Get specific proof
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: proofId
+          required: true
+          schema:
+            type: string
+          description: Proof ID
+      responses:
+        '200':
+          description: Proof details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  proof:
+                    $ref: '#/components/schemas/Proof'
+
+    put:
+      summary: Update proof
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: proofId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                  enum: [pending, verified, failed]
+      responses:
+        '200':
+          description: Proof updated successfully
+
+    delete:
+      summary: Delete proof
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: proofId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Proof deleted successfully
+
+  /proofs/{proofId}/verify:
+    post:
+      summary: Verify proof
+      tags:
+        - Proofs
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: proofId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                verification_method:
+                  type: string
+                  example: "reclaim_protocol"
+                verification_data:
+                  type: object
+                  description: Verification-specific data
+      responses:
+        '200':
+          description: Verification completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  verification:
+                    $ref: '#/components/schemas/ProofVerification'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        wallet_address:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Proof:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        provider:
+          type: string
+        proof_data:
+          type: object
+        status:
+          type: string
+          enum: [pending, verified, failed]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        verifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProofVerification'
+
+    ProofVerification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        proof_id:
+          type: string
+          format: uuid
+        is_verified:
+          type: boolean
+        verification_method:
+          type: string
+        verification_data:
+          type: object
+        verified_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+        message:
+          type: string
