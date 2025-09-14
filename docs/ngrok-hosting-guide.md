@@ -5,8 +5,31 @@
 ## 前提条件
 - DockerとDocker Composeがインストール済み
 - Gitがインストール済み
-- ngrokアカウント（無料プランで十分、有料プランでカスタムサブドメイン可）
+- ngrokアカウント（無料プランで十分、Personal/Pro/Businessプランでカスタムサブドメイン可）
 - Node.js（v18以上）とpnpmがインストール済み
+
+## ngrokプラン比較
+
+### 無料プラン（Free）
+- ランダムURL（例：`https://abc123-def456.ngrok-free.app`）
+- 1つの静的ドメインを無料で取得可能（2024年以降）
+- セッション毎にURLが変わる可能性あり（再起動時）
+- 1分あたり40接続まで
+- HTTPSサポート
+
+### Personal プラン（$8/月、年額払い時）
+- **1つのカスタムサブドメイン**（例：`myapp.ngrok.app` または `myapp.ngrok.dev`）
+- URLが固定され、再起動してもサブドメインが維持される
+- 1つの予約TCPアドレス
+- 月5GBのデータ転送量
+- 個人の非商用プロジェクトに最適
+- ハッカソンのデモに推奨
+
+### Pro/Business プラン
+- 複数のカスタムドメイン
+- ワイルドカードドメイン対応
+- チーム機能
+- より高いデータ転送量制限
 
 ## アーキテクチャ概要
 このプロジェクトは以下のサービスで構成されています：
@@ -90,8 +113,10 @@ ngrok config add-authtoken <your-authtoken>
 # 無料プラン（ランダムURL）
 ngrok http 5173
 
-# 有料プラン（カスタムサブドメイン）
+# Personal プラン（固定サブドメイン）
 ngrok http --subdomain=zksteam-frontend 5173
+# または --domain オプションを使用
+ngrok http --domain=zksteam-frontend.ngrok.app 5173
 ```
 
 ##### バックエンドAPIの公開
@@ -99,21 +124,29 @@ ngrok http --subdomain=zksteam-frontend 5173
 # 無料プラン
 ngrok http 3000
 
-# 有料プラン
+# Personal プラン（固定サブドメイン）
 ngrok http --subdomain=zksteam-api 3000
+# または --domain オプションを使用
+ngrok http --domain=zksteam-api.ngrok.app 3000
 ```
+
+**注意**: Personal プランでは1つのサブドメインのみ使用可能なため、フロントエンドとバックエンドを同時に固定サブドメインで公開する場合は、Nginxを使用した統合公開を推奨
 
 #### 本番環境（Nginx経由で統合公開）
 ```bash
 # Nginxプロファイルでサービスを起動
 docker-compose --profile nginx up -d
 
-# ngrokでNginxポートを公開
+# 無料プラン
 ngrok http 8080
 
-# 有料プラン（カスタムドメイン）
+# Personal プラン（固定サブドメインで統合公開 - 推奨）
+ngrok http --subdomain=zksteam 8080
+# または --domain オプションを使用
 ngrok http --domain=zksteam.ngrok.app 8080
 ```
+
+**Personal プランの利点**: 1つのサブドメインでフロントエンドとバックエンドの両方を提供できるため、コスト効率的
 
 ### 6. 複数エンドポイントの同時公開（ngrok設定ファイル使用）
 
@@ -125,13 +158,19 @@ tunnels:
   frontend:
     addr: 5173
     proto: http
-    # 有料プランの場合
+    # Personal プランの場合（どちらか1つのみ）
     # subdomain: zksteam-app
+    # domain: zksteam-app.ngrok.app
   backend:
     addr: 3000
     proto: http
-    # 有料プランの場合
-    # subdomain: zksteam-api
+    # 無料プランまたは2つ目のトンネル
+  nginx:
+    addr: 8080
+    proto: http
+    # Personal プラン推奨（統合エンドポイント）
+    # subdomain: zksteam
+    # domain: zksteam.ngrok.app
 ```
 
 起動：
@@ -180,15 +219,21 @@ wscat -c wss://your-backend-url.ngrok.io/ws
 
 ## セキュリティ設定
 
-### 基本認証の追加（有料プラン）
+### 基本認証の追加（Pro/Businessプラン）
 ```bash
 ngrok http --basic-auth="username:password" 5173
 ```
 
-### IP制限（有料プラン）
+### IP制限（Pro/Businessプラン）
 ```bash
 ngrok http --ip-policy-file=ip-policy.yml 5173
 ```
+
+### Personal プランでのセキュリティ
+Personal プランでは基本認証やIP制限は利用できませんが、以下の方法でセキュリティを強化できます：
+- アプリケーション側で認証機能を実装
+- 環境変数でアクセストークンを設定
+- Nginxレベルでの基本認証設定
 
 `ip-policy.yml`:
 ```yaml
@@ -262,6 +307,12 @@ docker-compose down -v
 ```
 
 ## 推奨事項
+
+### ハッカソンでのPersonal プラン活用
+- **Personal プラン（$8/月）は短期間のハッカソンに最適**
+- 固定URLによりQRコードやデモ資料の事前作成が可能
+- 1つのサブドメインでNginx経由の統合公開を推奨
+- デモ後は必要に応じてプランを無料に戻すことが可能
 
 ### パフォーマンス
 - 本番デモではNginxプロファイルを使用して統合エンドポイントを提供
