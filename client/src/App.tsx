@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { WalletProvider } from './wallet'
+import { WalletProvider, WalletConnectControls } from './wallet'
 import OriginalApp from './OriginalApp'
 
 type Page = 'search' | 'offer' | 'debug'
@@ -30,8 +30,8 @@ function Header({
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ margin: 0, fontSize: 24 }}>Steam Game Recommendation</h1>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 style={{ margin: 0, fontSize: 24 }}>Steam Game Recommendation</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <input
@@ -99,6 +99,9 @@ function Header({
                 Debug
               </button>
             </nav>
+            <div style={{ marginLeft: 8 }}>
+              <WalletConnectControls />
+            </div>
           </div>
         </div>
       </div>
@@ -411,22 +414,44 @@ function OfferPage({ prefilledSourceGameId }: { prefilledSourceGameId?: string }
           />
         </div>
 
-        <button
-          onClick={submitOffer}
-          disabled={loading || !sourceGameId.trim() || !targetGameId.trim() || !description.trim()}
-          style={{
-            padding: '12px 24px',
-            fontSize: 16,
-            backgroundColor: loading ? '#ccc' : '#17a2b8',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            transition: 'background-color 0.2s'
-          }}
-        >
-          {loading ? 'Submitting...' : 'Submit Offer'}
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button
+            type="button"
+            data-open-steam-extension
+            data-steam-url="https://store.steampowered.com/"
+            disabled={loading}
+            style={{
+              padding: '12px 16px',
+              fontSize: 16,
+              backgroundColor: '#2b7de9',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Verify with Steam
+          </button>
+
+          <button
+            onClick={submitOffer}
+            disabled={loading || !sourceGameId.trim() || !targetGameId.trim() || !description.trim()}
+            style={{
+              padding: '12px 24px',
+              fontSize: 16,
+              backgroundColor: loading ? '#ccc' : '#17a2b8',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+          >
+            {loading ? 'Submitting...' : 'Submit Offer'}
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -600,4 +625,3 @@ export default function App() {
     </WalletProvider>
   )
 }
-
