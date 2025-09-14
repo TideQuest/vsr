@@ -3,9 +3,10 @@ import * as gcp from "@pulumi/gcp";
 
 // Configuration
 const config = new pulumi.Config();
-const projectId = config.require("gcp:project");
-const region = config.get("gcp:region") || "asia-northeast1";
-const zone = config.get("gcp:zone") || "asia-northeast1-a";
+const gcpConfig = new pulumi.Config("gcp");
+const projectId = gcpConfig.require("project");
+const region = gcpConfig.get("region") || "asia-northeast1";
+const zone = gcpConfig.get("zone") || "asia-northeast1-a";
 const frontendDomain = config.get("frontendDomain") || "vsr-demo.tidequest.net";
 const backendDomain = config.get("backendDomain") || "vsr-api.tidequest.net";
 const githubToken = config.getSecret("githubToken"); // Optional for private repos
