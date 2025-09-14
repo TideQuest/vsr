@@ -206,11 +206,11 @@ pulumi destroy
 ```
 
 ## Cost Estimation
-- **VM (e2-medium)**: ~$25/month
+- **VM (e2-standard-2, 8GB RAM, 100GB disk)**: ~$50/month
 - **Load Balancer**: ~$18/month
 - **Static IPs**: ~$7/month
 - **Network egress**: Variable based on usage
-- **Total**: ~$50-60/month
+- **Total**: ~$75-85/month
 
 ## Security Considerations
 1. Update default passwords in `.env` file

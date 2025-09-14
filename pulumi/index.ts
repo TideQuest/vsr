@@ -146,13 +146,13 @@ echo "VSR deployment completed at $(date)"
 
 // Compute instance
 const vsrInstance = new gcp.compute.Instance("vsr-instance", {
-    machineType: "e2-medium",
+    machineType: "e2-standard-2",  // 2 vCPUs, 8GB RAM
     zone: zone,
 
     bootDisk: {
         initializeParams: {
             image: "ubuntu-os-cloud/ubuntu-2204-lts",
-            size: 50,
+            size: 100,  // 100GB disk
             type: "pd-standard",
         },
     },
