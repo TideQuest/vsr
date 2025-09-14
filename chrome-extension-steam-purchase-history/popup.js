@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", function () {
   const appIdInput = document.getElementById("appIdInput");
   const proofStatus = document.getElementById("proofStatus");
   const proofOutput = document.getElementById("proofOutput");
+  const ethStatus = document.getElementById("ethStatus");
+  const checkEthBtn = document.getElementById("checkEthBtn");
 
   let currentTab = "overview";
   let userData = null;
@@ -35,8 +37,15 @@ document.addEventListener("DOMContentLoaded", function () {
     fetchBtn.textContent = "Fetch Steam User Data";
   }
 
+  function setEthStatus(message, isError = false) {
+    ethStatus.textContent = message;
+    ethStatus.style.backgroundColor = isError ? "#ffebee" : "#f9f9f9";
+    ethStatus.style.borderColor = isError ? "#e74c3c" : "#ddd";
+    ethStatus.style.color = isError ? "#e74c3c" : "#333";
+  }
+
   function setProofStatus(message, isError = false) {
-    proofStatus.style.display = 'block';
+    proofStatus.style.display = "block";
     proofStatus.textContent = message;
     proofStatus.style.backgroundColor = isError ? "#ffebee" : "#f0f8ff";
     proofStatus.style.borderColor = isError ? "#e74c3c" : "#4a90e2";
@@ -44,8 +53,9 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function showProofOutput(obj) {
-    proofOutput.style.display = 'block';
-    proofOutput.textContent = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+    proofOutput.style.display = "block";
+    proofOutput.textContent =
+      typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
   }
 
   function displayOverview() {
@@ -286,6 +296,39 @@ document.addEventListener("DOMContentLoaded", function () {
 
   fetchBtn.addEventListener("click", fetchSteamData);
   clearBtn.addEventListener("click", clearData);
+
+  function sendMessageAsync(message) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage(message, (resp) => {
+        const err = chrome.runtime.lastError;
+        if (err) return reject(new Error(err.message));
+        resolve(resp);
+      });
+    });
+  }
+
+  async function checkEthAddress() {
+    setEthStatus("Checking connected address...");
+    try {
+      const resp = await sendMessageAsync({ action: "getEthereumAddress" });
+      if (!resp || !resp.success) {
+        setEthStatus(`Failed: ${resp?.error || "unknown error"}`, true);
+        return;
+      }
+      const { connected, account, error } = resp.data || {};
+      if (connected && account) {
+        setEthStatus(`Connected: ${account}`);
+      } else if (error) {
+        setEthStatus(`Not connected (${error})`, true);
+      } else {
+        setEthStatus("No connected wallet on this page");
+      }
+    } catch (e) {
+      setEthStatus(`Error: ${e?.message || String(e)}`, true);
+    }
+  }
+
+  checkEthBtn?.addEventListener("click", checkEthAddress);
 
   genProofBtn.addEventListener("click", async () => {
     proofOutput.style.display = 'none';

@@ -17,6 +17,6 @@
       ]
     }
   },
-  "postCreateCommand": "pnpm install && pnpm -C ../client install"
+  "postCreateCommand": "pnpm install --silent"
 }
 
