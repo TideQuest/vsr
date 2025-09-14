@@ -173,25 +173,26 @@ export async function createSteamProof(params: {
   cookieStr: string
   targetAppId?: string
 }) {
-  // Check required environment variables
+  // Check ZKP_MOCK first - if true, return mock mode immediately
+  if (isZkpMock()) {
+    return {
+      success: true,
+      mode: 'mock',
+      proof: {
+        sessionId: 'mock-session-' + Math.random().toString(36).slice(2),
+        steamId: params.steamId,
+        targetAppId: params.targetAppId,
+        timestamp: Date.now(),
+        verified: true
+      }
+    }
+  }
+
+  // Check required environment variables for real mode
   const appId = process.env.RECLAIM_APP_ID
   const appSecret = process.env.RECLAIM_APP_SECRET
 
   if (!appId || !appSecret) {
-    if (isZkpMock()) {
-      // Return mock proof for development
-      return {
-        success: true,
-        mode: 'mock',
-        proof: {
-          sessionId: 'mock-session-' + Math.random().toString(36).slice(2),
-          steamId: params.steamId,
-          targetAppId: params.targetAppId,
-          timestamp: Date.now(),
-          verified: true
-        }
-      }
-    }
     throw new Error('Missing RECLAIM_APP_ID or RECLAIM_APP_SECRET environment variables')
   }
 
