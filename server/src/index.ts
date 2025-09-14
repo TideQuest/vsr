@@ -5,8 +5,8 @@ import { nl2sqlRouter } from './routes/nl2sql.js'
 import { zkpRouter } from './routes/zkp.js'
 import itemsRouter from './routes/items.js'
 import recommendationsRouter from './routes/recommendations.js'
-import categoriesRouter from './routes/categories.js'
 import gamesRouter from './routes/games.js'
+import categoriesRouter from './routes/categories.js'
 
 const app = express()
 
@@ -33,4 +33,3 @@ const port = Number(process.env.PORT || 3000)
 app.listen(port, () => {
   console.log(`[server] listening on http://localhost:${port}`)
 })
-
