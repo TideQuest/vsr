@@ -327,6 +327,7 @@ function OfferPage({ prefilledSourceGameId }: { prefilledSourceGameId?: string }
   const [itemsError, setItemsError] = useState<string | null>(null)
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
+  const [steamProof, setSteamProof] = useState<any | null>(null)
   const { address } = useAccount()
 
   // Load Items from backend to ensure IDs exist
@@ -366,11 +367,55 @@ function OfferPage({ prefilledSourceGameId }: { prefilledSourceGameId?: string }
     loadItems()
   }, [prefilledSourceGameId])
 
+  // Listen for proof from the Chrome extension content script
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      // Only accept messages from same window
+      if (e.source !== window) return
+      const msg = e.data
+      if (msg && msg.type === 'STEAM_PROOF_FROM_EXTENSION') {
+        setSteamProof(msg.data)
+      }
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [])
+
   const submitOffer = async () => {
     if (!sourceGameId.trim() || !targetGameId.trim() || !description.trim()) return
 
     setLoading(true)
     try {
+      // If we have a Steam proof from the extension, verify it before submitting the offer
+      if (steamProof) {
+        const proofObj = steamProof.proof || steamProof
+        const steamId = steamProof.steamId || proofObj.steamId
+        const targetAppId = sourceGameId // prove ownership for the selected target game (sourceGameId variable)
+
+        const verifyRes = await fetch('/api/zkp/steam/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            proof: proofObj,
+            steamId,
+            targetAppId,
+            // Also send the recommended game's app id; server will accept if either matches the proof
+            recommendedAppId: targetGameId,
+            // If connected, bind proof to this account so purchase history matches the recommender
+            walletAddress: address || undefined,
+          }),
+        })
+        const verifyText = await verifyRes.text()
+        const verifyData = verifyText ? JSON.parse(verifyText) : null
+        if (!verifyRes.ok || !verifyData?.success) {
+          const msg = (verifyData && (verifyData.error || verifyData.reason)) || verifyText || 'Failed to verify Steam proof'
+          throw new Error(msg)
+        }
+        if (!verifyData.verified) {
+          throw new Error(`Steam proof not verified: ${verifyData.reason || 'unknown reason'}`)
+        }
+      }
+
       // Prefer Steam appId when available, backend route expects steam ids
       const src = sourceGameId
       const dst = targetGameId
@@ -397,6 +442,8 @@ function OfferPage({ prefilledSourceGameId }: { prefilledSourceGameId?: string }
       alert('Offer submitted successfully!')
       // Keep the selected IDs, just clear the text
       setDescription('')
+      // Clear proof only after successful submit
+      // setSteamProof(null)
       setLoading(false)
     } catch (error) {
       console.error('Error submitting offer:', error)
@@ -509,6 +556,12 @@ function OfferPage({ prefilledSourceGameId }: { prefilledSourceGameId?: string }
           >
             Verify with Steam
           </button>
+
+          {steamProof && (
+            <span style={{ fontSize: 12, color: '#2e7d32' }}>
+              Proof attached from extension
+            </span>
+          )}
 
           <button
             onClick={submitOffer}
