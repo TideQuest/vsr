@@ -19,7 +19,7 @@ export async function createProofRequest(params: {
   providerId?: string
   context?: Record<string, any>
 }) {
-  const providerId = params.providerId || process.env.RECLAIM_PROVIDER_ID
+  const providerId = params.providerId
   if (!providerId) {
     // For mock, simply return a fake URL the UI can display
     return {
