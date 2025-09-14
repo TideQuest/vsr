@@ -1,15 +1,5 @@
-// Try to obtain ReclaimClient in as many environments as possible
-let ReclaimClientRef = null;
-try {
-  if (typeof require === 'function') {
-    // If a bundler/polyfill provides require
-    const lib = require("@reclaimprotocol/zk-fetch");
-    ReclaimClientRef = lib?.ReclaimClient || null;
-  }
-} catch (_) {}
-if (!ReclaimClientRef && typeof window !== 'undefined' && window?.module?.exports?.ReclaimClient) {
-  ReclaimClientRef = window.module.exports.ReclaimClient;
-}
+// Backend API configuration
+const BACKEND_API_URL = 'http://localhost:3000/api/zkp';
 
 document.addEventListener("DOMContentLoaded", function () {
   const statusEl = document.getElementById("status");
@@ -19,8 +9,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const tabs = document.querySelectorAll(".tab");
   const genProofBtn = document.getElementById("genProofBtn");
   const appIdInput = document.getElementById("appIdInput");
-  const reclaimAppId = document.getElementById("reclaimAppId");
-  const reclaimAppSecret = document.getElementById("reclaimAppSecret");
   const proofStatus = document.getElementById("proofStatus");
   const proofOutput = document.getElementById("proofOutput");
 
@@ -253,10 +241,8 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
 
-    // Load saved inputs
-    chrome.storage.local.get(["zk_app_id","zk_app_secret","zk_appid_target"], (res) => {
-      if (res.zk_app_id) reclaimAppId.value = res.zk_app_id;
-      if (res.zk_app_secret) reclaimAppSecret.value = res.zk_app_secret;
+    // Load saved target app ID
+    chrome.storage.local.get(["zk_appid_target"], (res) => {
       if (res.zk_appid_target) appIdInput.value = res.zk_appid_target;
     });
   }
@@ -306,23 +292,10 @@ document.addEventListener("DOMContentLoaded", function () {
     setProofStatus("Preparing proof request...");
 
     const targetAppId = (appIdInput.value || '').trim();
-    const appId = (reclaimAppId.value || '').trim();
-    const appSecret = (reclaimAppSecret.value || '').trim();
 
-    // Persist inputs
-    chrome.storage.local.set({
-      zk_app_id: appId,
-      zk_app_secret: appSecret,
-      zk_appid_target: targetAppId,
-    });
-
-    if (!targetAppId) {
-      setProofStatus("Please enter an App ID to prove", true);
-      return;
-    }
-    if (!appId || !appSecret) {
-      setProofStatus("Please enter Reclaim Application ID and Secret", true);
-      return;
+    // Optional: Store target app ID for convenience
+    if (targetAppId) {
+      chrome.storage.local.set({ zk_appid_target: targetAppId });
     }
 
     // Ask background for the current user's URL and cookies
@@ -334,45 +307,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
       const { url, steamId, cookieStr } = resp.data;
 
-      // Build regex to match presence of the appId in rgOwnedApps
-      const regex = `"rgOwnedApps":\\s*\\[[^\\]]*\\b${targetAppId}\\b`;
-
-      if (!ReclaimClientRef) {
-        setProofStatus("ReclaimClient not available in this build. Bundle @reclaimprotocol/zk-fetch or load a browser build.", true);
-        showProofOutput({
-          hint: "Use a bundler (e.g., Browserify/Webpack) so require('@reclaimprotocol/zk-fetch') works in the popup, or inject a pre-bundled UMD build that sets window.module.exports.ReclaimClient.",
-          request: { url, steamId, regex }
-        });
-        return;
-      }
-
       try {
-        setProofStatus("Generating proof via zkFetch... this can take ~10-30s");
-        const client = new ReclaimClientRef(appId, appSecret);
+        setProofStatus("Generating proof via backend API...");
 
-        const proof = await client.zkFetch(
-          url,
-          {
-            method: 'GET',
-            headers: { 'Accept': 'application/json' },
+        // Call backend API to generate proof
+        const response = await fetch(`${BACKEND_API_URL}/steam/proof`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          {
+          body: JSON.stringify({
+            steamId,
+            userDataUrl: url,
             cookieStr,
-            responseMatches: [ { type: 'regex', value: regex } ],
-          },
-          2,
-          1500
-        );
+            targetAppId: targetAppId || undefined
+          })
+        });
 
-        if (!proof) {
-          setProofStatus("No proof returned", true);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          setProofStatus(`Failed: ${result.error || 'Unknown error'}`, true);
+          showProofOutput({ error: result.error || 'Failed to generate proof' });
           return;
         }
 
         setProofStatus("Proof generated successfully!");
-        showProofOutput(proof);
+        showProofOutput(result);
       } catch (err) {
-        setProofStatus(`Error generating proof: ${err?.message || String(err)}`, true);
+        setProofStatus(`Error: ${err?.message || String(err)}`, true);
         showProofOutput({ error: err?.message || String(err) });
       }
     });
