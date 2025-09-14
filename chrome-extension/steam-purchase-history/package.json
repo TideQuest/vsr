@@ -1,5 +1,5 @@
 {
-  "name": "chrome-extension-steam-purchase-history",
+  "name": "steam-purchase-history",
   "version": "1.0.0",
   "main": "background.js",
   "scripts": {
