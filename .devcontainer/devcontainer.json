@@ -17,6 +17,6 @@
       ]
     }
   },
-  "postCreateCommand": "cd /usr/src/app && pnpm install --silent"
+  "postCreateCommand": "pnpm install --silent"
 }
 
