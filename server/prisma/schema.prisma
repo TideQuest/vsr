@@ -34,8 +34,12 @@ model Proof {
   provider   String
   verified   Boolean  @default(false)
   proofJson  Json
+  sessionId  String?  @unique // Prevent duplicate proofs
   claimedAt  DateTime @default(now())
   createdAt  DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([userId])
 }
 
 model Category {
