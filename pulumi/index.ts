@@ -323,15 +323,18 @@ const urlMap = new gcp.compute.URLMap("vsr-url-map", {
     ],
 });
 
-// Get existing SSL certificate (already created via gcloud)
-const existingCert = gcp.compute.getCertificate({
+// Create managed SSL certificate
+const managedCert = new gcp.compute.ManagedSslCertificate("vsr-ssl-cert", {
     name: "vsr-ssl-cert",
+    managed: {
+        domains: [frontendDomain, backendDomain],
+    },
 });
 
 // HTTPS proxy
 const httpsProxy = new gcp.compute.TargetHttpsProxy("vsr-https-proxy", {
     urlMap: urlMap.selfLink,
-    sslCertificates: [existingCert.then((cert: gcp.compute.GetCertificateResult) => cert.selfLink)],
+    sslCertificates: [managedCert.selfLink],
 });
 
 // HTTP proxy (for initial setup)
@@ -364,6 +367,7 @@ export const frontendHttpUrl = pulumi.interpolate`http://${frontendDomain}`;
 export const backendHttpUrl = pulumi.interpolate`http://${backendDomain}`;
 export const sshCommand = pulumi.interpolate`gcloud compute ssh vsr-instance --zone=${zone}`;
 export const logsCommand = pulumi.interpolate`gcloud compute ssh vsr-instance --zone=${zone} --command="sudo tail -f /var/log/startup-script.log"`;
+export const sslCertStatus = pulumi.interpolate`gcloud compute ssl-certificates describe vsr-ssl-cert --global`;
 
 // Instructions
 export const nextSteps = `
@@ -381,8 +385,8 @@ Next Steps:
 4. View logs:
    sudo tail -f /var/log/startup-script.log
 
-5. For HTTPS setup, create managed SSL certificates:
-   gcloud compute ssl-certificates create vsr-ssl-cert \\
-     --domains=${frontendDomain},${backendDomain} \\
-     --global
+5. SSL certificates will be automatically provisioned by GCP.
+   It may take 15-60 minutes for the certificates to become active.
+   You can check the status with:
+   gcloud compute ssl-certificates describe vsr-ssl-cert --global
 `;
