@@ -1,0 +1,6 @@
+config:
+  gcp:project: vsr-2025
+  gcp:region: asia-northeast1
+  gcp:zone: asia-northeast1-a
+  vsr-gcp:frontendDomain: vsr-demo.tidequest.net
+  vsr-gcp:backendDomain: vsr-api.tidequest.net
