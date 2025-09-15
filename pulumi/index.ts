@@ -71,6 +71,16 @@ const allowHealthChecks = new gcp.compute.Firewall("allow-health-checks", {
     targetTags: ["allow-health-checks"],
 });
 
+const allowSsh = new gcp.compute.Firewall("allow-ssh", {
+    network: network.selfLink,
+    allows: [{
+        protocol: "tcp",
+        ports: ["22"],
+    }],
+    sourceRanges: ["0.0.0.0/0"],
+    targetTags: ["ssh-server"],
+});
+
 // Startup script for VM
 const startupScript = `#!/bin/bash
 set -e
@@ -167,7 +177,7 @@ const vsrInstance = new gcp.compute.Instance("vsr-instance", {
 
     metadataStartupScript: startupScript,
 
-    tags: ["http-server", "https-server", "vsr-app", "allow-health-checks"],
+    tags: ["http-server", "https-server", "vsr-app", "allow-health-checks", "ssh-server"],
 
     serviceAccount: {
         scopes: [
