@@ -91,14 +91,41 @@ exec 2>&1
 
 echo "Starting VSR deployment at $(date)"
 
+# Function to log with timestamp
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
+}
+
+log "Starting system update..."
+
 # Update system
 apt-get update
-apt-get install -y git docker.io docker-compose
+apt-get install -y git curl
 
+log "Installing Docker..."
+# Install Docker using official script
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+
+log "Configuring Docker..."
 # Enable and start Docker
 systemctl enable docker
 systemctl start docker
 
+# Add ubuntu user to docker group
+usermod -aG docker ubuntu
+
+log "Installing Docker Compose V2..."
+# Install Docker Compose V2
+curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+ln -sf /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+log "Verifying Docker installation..."
+docker --version
+docker-compose --version
+
+log "Cloning repository..."
 # Clone repository
 cd /opt
 if [ ! -d "vsr" ]; then
@@ -140,18 +167,23 @@ VITE_WALLETCONNECT_PROJECT_ID=
 EOF
 fi
 
+log "Setting up environment..."
 # Pull and initialize Ollama model (only on first run)
 if [ ! -f /opt/vsr/.ollama-initialized ]; then
-    echo "Initializing Ollama model..."
+    log "Initializing Ollama model..."
     docker-compose --profile init up ollama-init
     touch /opt/vsr/.ollama-initialized
-    echo "Ollama model initialized"
+    log "Ollama model initialized"
 fi
 
+log "Starting all services..."
 # Start all services with docker-compose
 docker-compose up -d
 
-echo "VSR deployment completed at $(date)"
+log "Checking service status..."
+docker-compose ps
+
+log "VSR deployment completed at $(date)"
 `;
 
 // Compute instance
