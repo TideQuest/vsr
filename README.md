@@ -4,7 +4,7 @@ VSR is a verifiable social recommendation system using zero-knowledge proofs wit
 
 ## Project Overview (PDF)
 
-[Project Overview PDF File](https://tidequest.github.io/vsr/overview.html)  
+[Project Overview Page](https://tidequest.github.io/vsr/overview.html)  
 
 ## Local Development Setup
 
@@ -107,3 +107,7 @@ docker-compose up -d db
 - `chrome-extension/`: Chrome extensions for Steam purchase history extraction
 - `.devcontainer/`: VS Code Dev Container configuration
 - `docker-compose.yml`: Docker Compose configuration
+
+## API List
+
+[Swagger UI](https://tidequest.github.io/vsr/)  
