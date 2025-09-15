@@ -281,14 +281,18 @@ const urlMap = new gcp.compute.URLMap("vsr-url-map", {
     ],
 });
 
-// HTTPS proxy
+// HTTPS proxy - Commented out until SSL certificates are configured
+// To enable HTTPS:
+// 1. Create managed SSL certificate: gcloud compute ssl-certificates create vsr-ssl-cert --domains=vsr-demo.tidequest.net,vsr-api.tidequest.net --global
+// 2. Uncomment the code below and reference the certificate
+/*
 const httpsProxy = new gcp.compute.TargetHttpsProxy("vsr-https-proxy", {
     urlMap: urlMap.selfLink,
     sslCertificates: [
-        // Note: SSL certificates need to be created manually or via Cloud DNS
-        // For now, using HTTP proxy
+        // Reference your SSL certificate resource here
     ],
 });
+*/
 
 // HTTP proxy (for initial setup)
 const httpProxy = new gcp.compute.TargetHttpProxy("vsr-http-proxy", {
