@@ -4,8 +4,7 @@ VSR is a verifiable social recommendation system using zero-knowledge proofs wit
 
 ## Project Overview (PDF)
 
-[Project Overview (PDF embedded)](https://tidequest.github.io/vsr/overview.html)  
-Direct PDF link → [./docs/project-overview.pdf](https://github.com/TideQuest/vsr/blob/main/docs/project-overview.pdf)
+[Project Overview PDF File](https://tidequest.github.io/vsr/overview.html)  
 
 ## Local Development Setup
 
