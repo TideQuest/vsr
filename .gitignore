@@ -41,3 +41,5 @@ server/prisma/*.db-journal
 server/.pnpm-store/
 
 .specstory/
+
+_docs/

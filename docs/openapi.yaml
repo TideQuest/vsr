@@ -23,6 +23,10 @@ tags:
     description: Natural language to SQL query operations
   - name: ZKP
     description: Zero-knowledge proof operations
+  - name: Curators
+    description: Game curator recommendation operations
+  - name: Games
+    description: Game management and recommendation operations
 
 paths:
   /api/health:
@@ -785,6 +789,384 @@ paths:
         '500':
           description: Failed to verify Steam proof
 
+  /api/zkp/test/mock:
+    post:
+      operationId: createMockZKProof
+      summary: Create mock proof for testing
+      description: Create a mock zero-knowledge proof for testing purposes
+      tags:
+        - ZKP
+      responses:
+        '200':
+          description: Mock proof created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  proofId:
+                    type: string
+                    description: ID of the created mock proof
+                    example: "proof_123"
+
+  /api/curators:
+    get:
+      operationId: getAllCurators
+      summary: Get all curators
+      description: Retrieve all available game curators
+      tags:
+        - Curators
+      responses:
+        '200':
+          description: List of curators
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Curator'
+
+  /api/curators/{curatorId}:
+    get:
+      operationId: getCuratorById
+      summary: Get specific curator
+      description: Retrieve a specific curator by ID
+      tags:
+        - Curators
+      parameters:
+        - in: path
+          name: curatorId
+          required: true
+          schema:
+            type: string
+          description: Curator ID
+      responses:
+        '200':
+          description: Curator details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Curator'
+        '404':
+          description: Curator not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/curators/{curatorId}/recommend:
+    post:
+      operationId: getCuratorRecommendations
+      summary: Get game recommendations from curator
+      description: Get game recommendations from a specific curator based on input game
+      tags:
+        - Curators
+      parameters:
+        - in: path
+          name: curatorId
+          required: true
+          schema:
+            type: string
+          description: Curator ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                game:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  description: Game name to get recommendations for
+              required:
+                - game
+      responses:
+        '200':
+          description: Curator recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CuratorRecommendationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Curator not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to get curator recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/games/{steamAppId}:
+    get:
+      operationId: getGameDetails
+      summary: Get game details
+      description: Retrieve detailed information about a specific Steam game
+      tags:
+        - Games
+      parameters:
+        - in: path
+          name: steamAppId
+          required: true
+          schema:
+            type: string
+          description: Steam application ID
+      responses:
+        '200':
+          description: Game details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameDetails'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to fetch game details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/games/{steamAppId}/recommendations:
+    get:
+      operationId: getGameRecommendations
+      summary: Get recommendations for a game
+      description: Retrieve user recommendations for a specific Steam game
+      tags:
+        - Games
+      parameters:
+        - in: path
+          name: steamAppId
+          required: true
+          schema:
+            type: string
+          description: Steam application ID
+        - in: query
+          name: walletAddress
+          schema:
+            type: string
+          description: User wallet address for personalized results
+      responses:
+        '200':
+          description: Game recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameRecommendation'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to fetch recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/games/recommendations:
+    post:
+      operationId: createGameRecommendation
+      summary: Create a new game recommendation
+      description: Create a new recommendation between two games
+      tags:
+        - Games
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceGameId:
+                  type: string
+                  description: Steam app ID of the source game
+                targetGameId:
+                  type: string
+                  description: Steam app ID of the recommended game
+                description:
+                  type: string
+                  description: Recommendation description
+                walletAddress:
+                  type: string
+                  description: User wallet address
+              required:
+                - sourceGameId
+                - targetGameId
+                - description
+                - walletAddress
+      responses:
+        '201':
+          description: Recommendation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecommendationResult'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Game or account not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to create recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/games/{id}/like:
+    post:
+      operationId: likeGameRecommendation
+      summary: Like a game recommendation
+      description: Like or toggle like status for a game recommendation
+      tags:
+        - Games
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Recommendation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                walletAddress:
+                  type: string
+                  description: User wallet address
+              required:
+                - walletAddress
+      responses:
+        '200':
+          description: Like status updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  liked:
+                    type: boolean
+        '201':
+          description: Like created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  liked:
+                    type: boolean
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Account or recommendation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to like recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      operationId: unlikeGameRecommendation
+      summary: Unlike a game recommendation
+      description: Remove like from a game recommendation
+      tags:
+        - Games
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Recommendation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                walletAddress:
+                  type: string
+                  description: User wallet address
+              required:
+                - walletAddress
+      responses:
+        '200':
+          description: Like removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  liked:
+                    type: boolean
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+        '404':
+          description: Account, recommendation, or like not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to unlike recommendation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   schemas:
     User:
@@ -965,3 +1347,175 @@ components:
           type: array
           items:
             type: object
+
+    Curator:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique curator identifier
+          example: "vita"
+        name:
+          type: string
+          description: Display name of the curator
+          example: "Immersive Experience Curator"
+        description:
+          type: string
+          description: Description of the curator's expertise
+          example: "Focuses on immersion and innovative experiences"
+        category:
+          type: string
+          description: Curator category
+          example: "immersive"
+
+    CuratorRecommendation:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Recommended game name
+          example: "Outer Wilds"
+        reason:
+          type: string
+          description: Reason for recommendation
+          example: "Expands The Witcher 3's exploration with cosmic mystery and time loop immersion"
+        category:
+          type: string
+          description: Game category
+          example: "immersive"
+        steamAppId:
+          type: integer
+          nullable: true
+          description: Steam application ID
+          example: 753640
+        steamUrl:
+          type: string
+          nullable: true
+          description: Steam store URL
+          example: "https://store.steampowered.com/app/753640/Outer_Wilds/"
+
+    CuratorRecommendationResponse:
+      type: object
+      properties:
+        curator:
+          type: string
+          description: Curator ID that provided recommendations
+          example: "vita"
+        inputGame:
+          type: string
+          description: Input game name
+          example: "The Witcher 3"
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CuratorRecommendation'
+        processingTime:
+          type: number
+          description: Processing time in seconds
+          example: 2.5
+        curatorInfo:
+          $ref: '#/components/schemas/Curator'
+
+    GameDetails:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Steam application ID
+          example: "753640"
+        name:
+          type: string
+          description: Game name
+          example: "Outer Wilds"
+        description:
+          type: string
+          description: Game description
+          example: "A space exploration game with time loop mechanics"
+        genre:
+          type: string
+          description: Game genre
+          example: "Adventure"
+        releaseDate:
+          type: string
+          description: Game release date
+          example: "2019-05-30"
+        developer:
+          type: string
+          description: Game developer
+          example: "Mobius Digital"
+        imageUrl:
+          type: string
+          description: Game header image URL
+          example: "https://steamcdn-a.akamaihd.net/steam/apps/753640/header.jpg"
+
+    GameRecommendation:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Recommendation ID
+          example: "rec_123"
+        name:
+          type: string
+          description: Recommended game name
+          example: "Subnautica"
+        description:
+          type: string
+          description: Recommendation description
+          example: "Similar underwater exploration experience"
+        accountType:
+          type: string
+          enum: ["ai", "admin", "user"]
+          description: Type of account that made the recommendation
+          example: "user"
+        accountName:
+          type: string
+          description: Name of the account that made the recommendation
+          example: "gamer123"
+        purchaseHistory:
+          type: object
+          nullable: true
+          properties:
+            hasSourceGame:
+              type: boolean
+              description: Whether the recommender owns the source game
+            hasRecommendedGame:
+              type: boolean
+              description: Whether the recommender owns the recommended game
+        likes:
+          type: integer
+          description: Number of likes for this recommendation
+          example: 5
+        isLiked:
+          type: boolean
+          description: Whether the current user liked this recommendation
+          example: false
+
+    RecommendationResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Recommendation result ID
+          example: "rec_result_123"
+        itemId:
+          type: string
+          description: Recommended item ID
+          example: "item_456"
+        recommendRequestId:
+          type: string
+          description: Recommendation request ID
+          example: "req_789"
+        recommenderAccountId:
+          type: string
+          description: Account ID of the recommender
+          example: "acc_101"
+        recommendationText:
+          type: string
+          description: Recommendation text
+          example: "Great game with similar mechanics"
+        status:
+          type: string
+          enum: ["active", "inactive"]
+          description: Recommendation status
+          example: "active"
