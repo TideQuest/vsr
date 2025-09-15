@@ -281,25 +281,31 @@ const urlMap = new gcp.compute.URLMap("vsr-url-map", {
     ],
 });
 
-// HTTPS proxy - Commented out until SSL certificates are configured
-// To enable HTTPS:
-// 1. Create managed SSL certificate: gcloud compute ssl-certificates create vsr-ssl-cert --domains=vsr-demo.tidequest.net,vsr-api.tidequest.net --global
-// 2. Uncomment the code below and reference the certificate
-/*
+// Get existing SSL certificate (already created via gcloud)
+const existingCert = gcp.compute.getSslCertificate({
+    name: "vsr-ssl-cert",
+});
+
+// HTTPS proxy
 const httpsProxy = new gcp.compute.TargetHttpsProxy("vsr-https-proxy", {
     urlMap: urlMap.selfLink,
-    sslCertificates: [
-        // Reference your SSL certificate resource here
-    ],
+    sslCertificates: [existingCert.then(cert => cert.selfLink)],
 });
-*/
 
 // HTTP proxy (for initial setup)
 const httpProxy = new gcp.compute.TargetHttpProxy("vsr-http-proxy", {
     urlMap: urlMap.selfLink,
 });
 
-// Global forwarding rule
+// HTTPS forwarding rule
+const httpsForwardingRule = new gcp.compute.GlobalForwardingRule("vsr-https-forwarding-rule", {
+    ipAddress: lbStaticIp.address,
+    ipProtocol: "TCP",
+    portRange: "443",
+    target: httpsProxy.selfLink,
+});
+
+// HTTP forwarding rule (keeps HTTP available)
 const httpForwardingRule = new gcp.compute.GlobalForwardingRule("vsr-http-forwarding-rule", {
     ipAddress: lbStaticIp.address,
     ipProtocol: "TCP",
@@ -310,8 +316,10 @@ const httpForwardingRule = new gcp.compute.GlobalForwardingRule("vsr-http-forwar
 // Outputs
 export const instanceIp = vmStaticIp.address;
 export const loadBalancerIp = lbStaticIp.address;
-export const frontendUrl = pulumi.interpolate`http://${frontendDomain}`;
-export const backendUrl = pulumi.interpolate`http://${backendDomain}`;
+export const frontendUrl = pulumi.interpolate`https://${frontendDomain}`;
+export const backendUrl = pulumi.interpolate`https://${backendDomain}`;
+export const frontendHttpUrl = pulumi.interpolate`http://${frontendDomain}`;
+export const backendHttpUrl = pulumi.interpolate`http://${backendDomain}`;
 export const sshCommand = pulumi.interpolate`gcloud compute ssh vsr-instance --zone=${zone}`;
 export const logsCommand = pulumi.interpolate`gcloud compute ssh vsr-instance --zone=${zone} --command="sudo tail -f /var/log/startup-script.log"`;
 
