@@ -282,14 +282,14 @@ const urlMap = new gcp.compute.URLMap("vsr-url-map", {
 });
 
 // Get existing SSL certificate (already created via gcloud)
-const existingCert = gcp.compute.getSslCertificate({
+const existingCert = gcp.compute.getCertificate({
     name: "vsr-ssl-cert",
 });
 
 // HTTPS proxy
 const httpsProxy = new gcp.compute.TargetHttpsProxy("vsr-https-proxy", {
     urlMap: urlMap.selfLink,
-    sslCertificates: [existingCert.then(cert => cert.selfLink)],
+    sslCertificates: [existingCert.then((cert: gcp.compute.GetCertificateResult) => cert.selfLink)],
 });
 
 // HTTP proxy (for initial setup)
