@@ -1,4 +1,4 @@
-# VSR: Verifiable Social Recommendation - ETHTokyo 2025 Sandbox
+# VSR: Verifiable Social Recommendation - ETHTokyo 2025
 
 VSR is a verifiable social recommendation system using zero-knowledge proofs with Steam purchase history. Users can prove their game purchase history in a privacy-preserving manner and build a community-driven, decentralized recommendation system.
 
