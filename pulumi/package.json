@@ -1,0 +1,21 @@
+{
+  "name": "vsr-gcp-infrastructure",
+  "version": "1.0.0",
+  "description": "Pulumi infrastructure for VSR demo on GCP",
+  "main": "index.ts",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "pulumi up",
+    "preview": "pulumi preview",
+    "destroy": "pulumi destroy"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@pulumi/gcp": "^7.0.0",
+    "@pulumi/pulumi": "^3.0.0"
+  },
+  "packageManager": "pnpm@8.15.0+sha512.ea45517d5285d123eac02c3793505fa1fd6da90a2fc60d1e8d9e0c1e9292886ecfaff513f062b9d1cc8021bb8615033b1ac5bea3b2ee3fc165a6d7034bbe6b03"
+}
