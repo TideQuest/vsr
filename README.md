@@ -2,6 +2,11 @@
 
 VSR is a verifiable social recommendation system using zero-knowledge proofs with Steam purchase history. Users can prove their game purchase history in a privacy-preserving manner and build a community-driven, decentralized recommendation system.
 
+## Project Overview (PDF)
+
+[Project Overview (PDF embedded)](https://tidequest.github.io/vsr/overview.html)  
+Direct PDF link → ./docs/project-overview.pdf
+
 ## Local Development Setup
 
 ### Prerequisites
