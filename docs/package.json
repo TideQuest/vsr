@@ -13,12 +13,13 @@
     "prebuild": "mkdir -p dist && npm run lint"
   },
   "dependencies": {
+    "js-yaml": "^4.1.0",
     "swagger-ui-dist": "^5.9.0"
   },
   "devDependencies": {
-    "serve": "^14.2.1",
+    "@stoplight/spectral-cli": "^6.5.0",
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.1",
-    "@stoplight/spectral-cli": "^6.5.0"
+    "serve": "^14.2.1"
   }
 }

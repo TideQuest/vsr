@@ -789,29 +789,6 @@ paths:
         '500':
           description: Failed to verify Steam proof
 
-  /api/zkp/test/mock:
-    post:
-      operationId: createMockZKProof
-      summary: Create mock proof for testing
-      description: Create a mock zero-knowledge proof for testing purposes
-      tags:
-        - ZKP
-      responses:
-        '200':
-          description: Mock proof created
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  ok:
-                    type: boolean
-                    example: true
-                  proofId:
-                    type: string
-                    description: ID of the created mock proof
-                    example: "proof_123"
-
   /api/curators:
     get:
       operationId: getAllCurators
