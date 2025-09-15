@@ -102,11 +102,39 @@ docker-compose up -d db
 
 ## Project Structure
 
-- `client/`: React + TypeScript frontend
-- `server/`: Node.js + Express + Prisma backend
-- `chrome-extension/`: Chrome extensions for Steam purchase history extraction
-- `.devcontainer/`: VS Code Dev Container configuration
-- `docker-compose.yml`: Docker Compose configuration
+```
+vsr/
+├── chrome-extension/          # Chrome extensions
+│   ├── amazon-purchase-history/  # Amazon purchase history extraction
+│   └── steam-purchase-history/   # Steam purchase history extraction
+├── client/                    # Frontend (React + TypeScript + Vite)
+│   └── src/                   # Source code
+├── server/                    # Backend (Node.js + Express)
+│   ├── prisma/               # Database schema and migrations
+│   ├── src/
+│   │   ├── config/           # Configuration files
+│   │   ├── middleware/       # Express middleware
+│   │   ├── routes/           # API routes
+│   │   ├── services/         # Business logic
+│   │   └── utils/            # Utility functions
+│   └── test/                 # Test files
+├── docs/                      # Project documentation
+│   └── openapi.yaml          # API specification
+├── pulumi/                    # Infrastructure as Code (GCP deployment)
+├── nginx/                     # Nginx configuration
+├── ollama/                    # LLM integration
+├── .devcontainer/            # VS Code Dev Container configuration
+└── docker-compose.yml        # Docker Compose configuration
+
+### Technology Stack
+
+- **Frontend**: React, TypeScript, Vite
+- **Backend**: Node.js, Express, Prisma ORM
+- **Database**: PostgreSQL
+- **Chrome Extensions**: JavaScript, Webpack
+- **Infrastructure**: Docker, Pulumi (GCP)
+- **LLM**: Ollama (llama3.2:1b)
+- **Authentication**: Reclaim Protocol (ZKP)
 
 ## API List
 
